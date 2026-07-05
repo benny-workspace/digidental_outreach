@@ -15,5 +15,10 @@ exports/
 sample_data/*
 !sample_data/sample_leads.csv
 
+# Copywriter skill source stays local while this repo is public.
+# It holds sales tactics and objection scripts a prospect should not find.
+# If you make the repo private, remove this line and commit the folder.
+skill/
+
 # Streamlit local config
 .streamlit/

@@ -32,6 +32,18 @@ Never runs from the app. Run it from a terminal, for example before bed.
 
 Close heavy browser sessions before running a large batch.
 
+## Copywriter skill sync
+
+The digi-dental-copywriter skill (used by Claude for all Digi Dental copy)
+is built from this repo so it always matches the live templates. After you
+edit anything in `prompts\` or `reference\`, run:
+
+    python scripts\build_skill.py
+
+That rewrites `Documents\SKILLS\digi-dental-copywriter.skill` and the
+installed copy Claude Code uses. The skill source lives in `skill\` and is
+kept out of git while this repo is public, because it contains sales tactics.
+
 ## Files
 
 - `app.py` review UI. Never calls a model or the network.
