@@ -4,7 +4,7 @@ I noticed {clinic_name} and wanted to share something built for practices like y
 
 Front desks miss calls when they are busy or closed. That is lost revenue, quietly, every week.
 
-Denty is an AI overflow receptionist. It answers those calls and books new patient exams and emergencies straight into your Google Calendar. You keep your own Vapi account, so usage stays transparent.
+Denty is an AI overflow receptionist. It answers those calls and books new patient exams and emergencies straight into your Google Calendar. Setup is a one time $2,000. Management after that is $50 a month. You keep your own Vapi account, so usage stays transparent.
 
 {angle_line}
 

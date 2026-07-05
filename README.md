@@ -2,6 +2,11 @@
 
 A local outreach system for Denty. Everything runs on this laptop. No paid APIs, no recurring cost.
 
+## Opening the app
+
+Double-click `Start Outreach.bat`. The browser opens by itself.
+Keep the black window open while you work. Close it when you are done.
+
 ## Phase 1: the daily workflow (no model, no internet needed)
 
 1. Build a lead CSV by hand from Google Maps, Yelp, or Apollo. Copy the columns
@@ -13,6 +18,10 @@ A local outreach system for Denty. Everything runs on this laptop. No paid APIs,
 4. Work leads from the top score down. Generate drafts, edit, approve.
 5. Export: `python scripts\export.py` or the Export view in the app.
    Files land in `exports\`.
+6. After you send and hear back, record the outcome on the lead in the
+   workspace. The Results page shows reply rates so you can see what works.
+   When a wording works, edit the file in `prompts\`. Every future draft
+   inherits the change. That is how the system improves over time.
 
 ## Phase 2: optional enrichment (needs Ollama, run it on purpose)
 

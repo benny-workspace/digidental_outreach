@@ -124,6 +124,20 @@ def workspace_page():
             st.markdown(f"**{label}:** {lead[field] or 'unknown'}")
         st.markdown(f"**Review count:** {lead['review_count']}")
 
+    st.markdown("**Outcome after sending** (feeds the Results page)")
+    outcome_options = [""] + list(db.LEAD_OUTCOMES)
+    current_outcome = (lead.get("outcome") or "").strip()
+    outcome_index = outcome_options.index(current_outcome) if current_outcome in outcome_options else 0
+    col_pick, col_save_outcome, _ = st.columns([2, 1, 2])
+    picked = col_pick.selectbox(
+        "Outcome", outcome_options, index=outcome_index,
+        key=f"outcome_{lead['id']}", label_visibility="collapsed",
+        format_func=lambda value: value if value else "not set",
+    )
+    if col_save_outcome.button("Save outcome", key=f"save_outcome_{lead['id']}"):
+        db.set_lead_outcome(lead["id"], picked)
+        st.rerun()
+
     if (lead["enrichment_summary"] or "").strip() or (lead["enrichment_angle"] or "").strip():
         st.info(
             f"**Phase 2 summary:** {lead['enrichment_summary'] or 'none'}\n\n"
@@ -187,6 +201,50 @@ def export_page():
     st.caption(f"Export folder: {export_script.EXPORTS_DIR}")
 
 
+def results_page():
+    st.title("Results")
+    st.caption(
+        "Record an outcome on each lead in the workspace after you send. "
+        "This page shows what is working so you can sharpen the templates."
+    )
+    leads = db.get_leads()
+    tracked = [l for l in leads if (l.get("outcome") or "").strip()]
+    if not tracked:
+        st.info("No outcomes recorded yet. Set one in the Lead workspace after you send.")
+        return
+
+    counts = {}
+    for lead in tracked:
+        counts[lead["outcome"]] = counts.get(lead["outcome"], 0) + 1
+    st.dataframe(
+        [{"Outcome": outcome, "Leads": count} for outcome, count in sorted(counts.items())],
+        hide_index=True,
+    )
+
+    positive = {"replied", "call_booked", "closed_won"}
+
+    def reply_rate(group):
+        if not group:
+            return "no data yet"
+        hits = sum(1 for l in group if l["outcome"] in positive)
+        return f"{hits} of {len(group)}"
+
+    enriched = [l for l in tracked if (l["enrichment_angle"] or "").strip()]
+    plain = [l for l in tracked if not (l["enrichment_angle"] or "").strip()]
+    high_score = [l for l in tracked if l["intent_score"] >= 5]
+    low_score = [l for l in tracked if l["intent_score"] < 5]
+
+    st.subheader("What is working")
+    st.markdown(f"**With Phase 2 enrichment:** {reply_rate(enriched)} got a reply or better")
+    st.markdown(f"**Without enrichment:** {reply_rate(plain)} got a reply or better")
+    st.markdown(f"**Score 5 and up:** {reply_rate(high_score)} got a reply or better")
+    st.markdown(f"**Score under 5:** {reply_rate(low_score)} got a reply or better")
+    st.caption(
+        "A reply or better means replied, call_booked, or closed_won. "
+        "When a wording works, put it in the template file. Every future draft inherits it."
+    )
+
+
 def reference_page():
     st.title("Reference")
     st.caption(
@@ -200,7 +258,7 @@ def reference_page():
             st.divider()
 
 
-page = st.sidebar.radio("View", ["Leads", "Lead workspace", "Export", "Reference"])
+page = st.sidebar.radio("View", ["Leads", "Lead workspace", "Export", "Results", "Reference"])
 st.sidebar.caption(
     "Phase 2 enrichment never runs from this app. Run it from a terminal "
     "when you choose to: python scripts\\enrich_batch.py"
@@ -212,5 +270,7 @@ elif page == "Lead workspace":
     workspace_page()
 elif page == "Export":
     export_page()
+elif page == "Results":
+    results_page()
 else:
     reference_page()

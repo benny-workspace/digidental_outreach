@@ -17,6 +17,9 @@ LEAD_STATUSES = ("imported", "skipped", "drafts_generated", "reviewed", "exporte
 MESSAGE_TYPES = ("first_contact", "follow_up", "loom_script")
 MESSAGE_STATUSES = ("draft", "approved", "exported")
 
+# Recorded by hand after sending, so the Results page can show what works.
+LEAD_OUTCOMES = ("no_reply", "replied", "call_booked", "closed_won", "not_interested")
+
 LEAD_INSERT_COLUMNS = (
     "clinic_name", "owner_first_name", "website", "location", "phone", "email",
     "source", "notes", "evening_or_saturday_hours", "single_location",
@@ -78,6 +81,9 @@ def init_db():
         );
         """
     )
+    existing_columns = [row["name"] for row in conn.execute("PRAGMA table_info(leads)")]
+    if "outcome" not in existing_columns:
+        conn.execute("ALTER TABLE leads ADD COLUMN outcome TEXT DEFAULT ''")
     conn.commit()
     conn.close()
 
@@ -141,6 +147,16 @@ def set_lead_status(lead_id, status):
     conn.execute(
         "UPDATE leads SET status = ?, updated_at = ? WHERE id = ?",
         (status, now_iso(), lead_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def set_lead_outcome(lead_id, outcome):
+    conn = get_conn()
+    conn.execute(
+        "UPDATE leads SET outcome = ?, updated_at = ? WHERE id = ?",
+        (outcome, now_iso(), lead_id),
     )
     conn.commit()
     conn.close()
