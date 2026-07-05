@@ -126,6 +126,30 @@ def insert_lead(fields):
     return lead_id
 
 
+LEAD_EDITABLE_COLUMNS = (
+    "owner_first_name", "website", "location", "phone", "email", "notes",
+    "evening_or_saturday_hours", "single_location", "has_chatbot",
+    "mentions_emergency_or_same_day", "review_count",
+    "has_after_hours_number", "already_has_ai_receptionist",
+    "intent_score", "status",
+)
+
+
+def update_lead_fields(lead_id, fields):
+    """Update a lead. Only columns in LEAD_EDITABLE_COLUMNS are accepted."""
+    updates = {k: v for k, v in fields.items() if k in LEAD_EDITABLE_COLUMNS}
+    if not updates:
+        return
+    assignments = ", ".join(f"{col} = ?" for col in updates)
+    conn = get_conn()
+    conn.execute(
+        f"UPDATE leads SET {assignments}, updated_at = ? WHERE id = ?",
+        list(updates.values()) + [now_iso(), lead_id],
+    )
+    conn.commit()
+    conn.close()
+
+
 def lead_exists(clinic_name, location):
     """True if a lead with the same clinic name and location is already stored."""
     conn = get_conn()

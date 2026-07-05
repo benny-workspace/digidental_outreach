@@ -173,6 +173,52 @@ def workspace_page():
             st.markdown(f"**{label}:** {lead[field] or 'unknown'}")
         st.markdown(f"**Review count:** {lead['review_count']}")
 
+    with st.expander("Edit lead details and signals (score recomputes on save)"):
+        st.caption(
+            "Fill the signal fields from Google Maps or their website. "
+            "If you change signals, regenerate drafts afterward so the angle updates."
+        )
+        with st.form(f"edit_lead_{lead['id']}"):
+            col_a, col_b = st.columns(2)
+            with col_a:
+                owner_value = st.text_input("Owner first name", value=lead.get("owner_first_name") or "")
+                email_value = st.text_input("Email", value=lead["email"] or "")
+                phone_value = st.text_input("Phone", value=lead["phone"] or "")
+                website_value = st.text_input("Website", value=lead["website"] or "")
+                notes_value = st.text_area("Notes", value=lead["notes"] or "", height=80)
+            with col_b:
+                flag_options = ["", "Y", "N"]
+                flag_values = {}
+                for label, field in SIGNAL_FIELDS:
+                    current = lead[field] or ""
+                    flag_values[field] = st.selectbox(
+                        label, flag_options,
+                        index=flag_options.index(current) if current in flag_options else 0,
+                    )
+                review_value = st.number_input(
+                    "Review count", min_value=0, value=int(lead["review_count"] or 0)
+                )
+            if st.form_submit_button("Save lead"):
+                updated = {
+                    "owner_first_name": owner_value.strip(),
+                    "email": email_value.strip(),
+                    "phone": phone_value.strip(),
+                    "website": website_value.strip(),
+                    "notes": notes_value.strip(),
+                    "review_count": int(review_value),
+                }
+                updated.update(flag_values)
+                merged = dict(lead)
+                merged.update(updated)
+                score, disqualified = import_leads.compute_score(merged)
+                updated["intent_score"] = score
+                if disqualified and lead["status"] != "skipped":
+                    updated["status"] = "skipped"
+                elif not disqualified and lead["status"] == "skipped":
+                    updated["status"] = "imported"
+                db.update_lead_fields(lead["id"], updated)
+                st.rerun()
+
     st.markdown("**Outcome after sending** (also pick the channel the reply came from)")
     outcome_options = [""] + list(db.LEAD_OUTCOMES)
     channel_options = [""] + list(db.OUTREACH_CHANNELS)

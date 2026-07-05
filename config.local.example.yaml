@@ -1,0 +1,8 @@
+# Copy this file to config.local.yaml and fill in your Supabase details.
+# config.local.yaml is gitignored. Never put real keys in any committed file.
+#
+# Find both values in your Supabase dashboard:
+# Project Settings -> API -> Project URL and service_role secret key.
+supabase:
+  url: "https://YOURPROJECT.supabase.co"
+  service_role_key: "PASTE_SERVICE_ROLE_KEY_HERE"

@@ -46,6 +46,36 @@ turns that data into suggested template edits, written to
 
 Close heavy browser sessions before running either batch.
 
+## Planner sync (optional, Lovable + Supabase)
+
+One-way push of daily summary numbers into your Supabase project so the
+Lovable life planner can show them. Lead data never leaves this laptop.
+
+One-time setup:
+
+1. In the Supabase dashboard, open the SQL editor and run:
+
+       create table if not exists outreach_daily (
+         day date primary key,
+         total_leads int,
+         drafts_ready int,
+         leads_contacted int,
+         replies int,
+         calls_booked int,
+         closed_won int,
+         updated_at timestamptz default now()
+       );
+       alter table outreach_daily enable row level security;
+       create policy "planner can read stats" on outreach_daily
+         for select using (true);
+
+2. Copy `config.local.example.yaml` to `config.local.yaml` and fill in
+   your project URL and service_role key (Project Settings -> API).
+3. Run the sync once to test: double-click `Sync Planner.bat`.
+
+Then run the sync whenever you finish an outreach session. Running it
+twice a day is fine, it just refreshes today's row.
+
 ## Copywriter skill sync
 
 The digi-dental-copywriter skill (used by Claude for all Digi Dental copy)

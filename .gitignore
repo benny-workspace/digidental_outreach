@@ -22,3 +22,6 @@ skill/
 
 # Streamlit local config
 .streamlit/
+
+# Local secrets (Supabase keys for the planner sync). Never commit.
+config.local.yaml
