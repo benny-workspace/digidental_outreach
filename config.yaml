@@ -1,0 +1,14 @@
+# Edit founder_name before generating drafts. It appears in every message.
+founder_name: "Benny"
+
+# Used in the Loom script. Change it if you know the clinic's calendar name.
+calendar_name: "your Google Calendar"
+
+# Phase 2 only. Ignored unless you run scripts/enrich_batch.py yourself.
+ollama:
+  url: "http://localhost:11434/api/generate"
+  model: "llama3.2:1b"
+  timeout_seconds: 300
+
+enrichment:
+  max_page_chars: 4000

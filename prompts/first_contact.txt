@@ -1,0 +1,16 @@
+Hi {owner_first_name},
+
+I noticed {clinic_name} and wanted to share something built for practices like yours.
+
+Front desks miss calls when they are busy or closed. That is lost revenue, quietly, every week.
+
+Denty is an AI overflow receptionist. It answers those calls and books new patient exams and emergencies straight into your Google Calendar. Setup is a one time $2,000. Management after that is $50 a month. You keep your own Vapi account, so usage stays transparent.
+
+{angle_line}
+
+If Denty books zero after hours appointments in the first 30 days, the setup fee is refunded.
+
+Worth a 90 second Loom showing exactly how it would work for {clinic_name}?
+
+{founder_name}
+Founder, DigiDental

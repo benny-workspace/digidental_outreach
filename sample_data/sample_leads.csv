@@ -1,0 +1,4 @@
+clinic_name,website,location,phone,email,source,notes,evening_or_saturday_hours,single_location,has_chatbot,mentions_emergency_or_same_day,review_count,has_after_hours_number,already_has_ai_receptionist
+Smile Dental Center,https://www.smiledentalcenter.com,Austin TX,,,Google Maps,Open Saturdays,Y,Y,N,Y,14,N,N
+Family Dentistry of Springfield,https://www.springfieldfamilydental.com,Springfield IL,,,Yelp,Family-run,N,Y,N,N,31,N,N
+Bright Smile Clinic,,Chicago IL,,312-555-0199,Instagram DM,No website found,Y,Y,N,N,6,N,N

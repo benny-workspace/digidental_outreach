@@ -1,0 +1,19 @@
+# Virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Local database and uploads (never commit lead data)
+data/
+
+# Generated outreach files (never commit lead data)
+exports/
+
+# Real lead scrapes stay local. Only the sample file is tracked.
+sample_data/*
+!sample_data/sample_leads.csv
+
+# Streamlit local config
+.streamlit/
