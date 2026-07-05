@@ -29,10 +29,16 @@ SKILL_FILE = Path.home() / "Documents" / "SKILLS" / f"{SKILL_NAME}.skill"
 CLAUDE_SKILL_DIR = Path.home() / ".claude" / "skills" / SKILL_NAME
 
 TEMPLATE_FILES = [
-    ("first_contact.txt", "First contact (pricing-free, current default)"),
-    ("follow_up.txt", "Follow up"),
+    ("email_outreach.txt", "Email outreach (pricing-free, current default)"),
+    ("email_follow_up.txt", "Email follow-up sequence"),
+    ("linkedin_outreach.txt", "LinkedIn outreach"),
+    ("linkedin_follow_up.txt", "LinkedIn follow-up sequence"),
+    ("instagram_outreach.txt", "Instagram outreach"),
+    ("instagram_follow_up.txt", "Instagram follow-up sequence"),
+    ("facebook_outreach.txt", "Facebook outreach"),
+    ("facebook_follow_up.txt", "Facebook follow-up sequence"),
     ("loom_script.txt", "Loom script"),
-    ("first_contact_with_pricing.txt", "First contact with pricing (kept as a variant)"),
+    ("email_outreach_with_pricing.txt", "Email outreach with pricing (kept as a variant)"),
 ]
 
 

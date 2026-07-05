@@ -1,0 +1,9 @@
+Hey {owner_first_name}, quick one.
+
+When is the last time someone called {clinic_name} after closing, just to see what happens?
+
+Most owners already know. Voicemail.
+
+{angle_line}
+
+I build AI overflow receptionists for dental clinics. Want a 90 second screen recording showing how it would work for {clinic_name}? No forms, no pitch.

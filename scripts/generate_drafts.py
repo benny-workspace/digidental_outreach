@@ -57,9 +57,9 @@ def format_day(d):
 
 
 def previous_contact_date(lead_id):
-    """Date of the existing first_contact message, or today if there is none."""
+    """Date of the existing email outreach message, or today if there is none."""
     for message in db.get_messages_for_lead(lead_id):
-        if message["message_type"] == "first_contact" and message["created_at"]:
+        if message["message_type"] == "email_outreach" and message["created_at"]:
             try:
                 return format_day(datetime.fromisoformat(message["created_at"]).date())
             except ValueError:

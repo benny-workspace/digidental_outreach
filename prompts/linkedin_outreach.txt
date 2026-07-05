@@ -1,0 +1,9 @@
+Hey {owner_first_name}, one real question.
+
+How many patient calls does {clinic_name} miss after 5 PM or on weekends?
+
+{angle_line}
+
+I built an AI overflow receptionist for dental practices. It answers the calls the front desk cannot reach and books them straight into the calendar. Sounds human.
+
+Happy to send a 90 second Loom showing how it would work for {clinic_name}. Want it?

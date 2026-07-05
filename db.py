@@ -14,11 +14,20 @@ DATA_DIR = BASE_DIR / "data"
 DB_PATH = DATA_DIR / "outreach.db"
 
 LEAD_STATUSES = ("imported", "skipped", "drafts_generated", "reviewed", "exported")
-MESSAGE_TYPES = ("first_contact", "follow_up", "loom_script")
+
+# One outreach message and one follow-up sequence per channel, plus the Loom.
+MESSAGE_TYPES = (
+    "email_outreach", "email_follow_up",
+    "linkedin_outreach", "linkedin_follow_up",
+    "instagram_outreach", "instagram_follow_up",
+    "facebook_outreach", "facebook_follow_up",
+    "loom_script",
+)
 MESSAGE_STATUSES = ("draft", "approved", "exported")
 
 # Recorded by hand after sending, so the Results page can show what works.
 LEAD_OUTCOMES = ("no_reply", "replied", "call_booked", "closed_won", "not_interested")
+OUTREACH_CHANNELS = ("email", "linkedin", "instagram", "facebook", "other")
 
 LEAD_INSERT_COLUMNS = (
     "clinic_name", "owner_first_name", "website", "location", "phone", "email",
@@ -84,6 +93,17 @@ def init_db():
     existing_columns = [row["name"] for row in conn.execute("PRAGMA table_info(leads)")]
     if "outcome" not in existing_columns:
         conn.execute("ALTER TABLE leads ADD COLUMN outcome TEXT DEFAULT ''")
+    if "outcome_channel" not in existing_columns:
+        conn.execute("ALTER TABLE leads ADD COLUMN outcome_channel TEXT DEFAULT ''")
+    # Messages created before the channel system map onto the email channel.
+    conn.execute(
+        "UPDATE messages SET message_type = 'email_outreach' "
+        "WHERE message_type = 'first_contact'"
+    )
+    conn.execute(
+        "UPDATE messages SET message_type = 'email_follow_up' "
+        "WHERE message_type = 'follow_up'"
+    )
     conn.commit()
     conn.close()
 
@@ -152,11 +172,11 @@ def set_lead_status(lead_id, status):
     conn.close()
 
 
-def set_lead_outcome(lead_id, outcome):
+def set_lead_outcome(lead_id, outcome, channel=""):
     conn = get_conn()
     conn.execute(
-        "UPDATE leads SET outcome = ?, updated_at = ? WHERE id = ?",
-        (outcome, now_iso(), lead_id),
+        "UPDATE leads SET outcome = ?, outcome_channel = ?, updated_at = ? WHERE id = ?",
+        (outcome, channel, now_iso(), lead_id),
     )
     conn.commit()
     conn.close()
@@ -189,16 +209,16 @@ def insert_message(lead_id, message_type, content):
 
 
 def get_messages_for_lead(lead_id):
-    """Messages for one lead, always in first_contact, follow_up, loom_script order."""
+    """Messages for one lead, always in MESSAGE_TYPES order."""
     conn = get_conn()
     rows = conn.execute(
-        "SELECT * FROM messages WHERE lead_id = ? ORDER BY "
-        "CASE message_type "
-        "WHEN 'first_contact' THEN 1 WHEN 'follow_up' THEN 2 ELSE 3 END",
-        (lead_id,),
+        "SELECT * FROM messages WHERE lead_id = ?", (lead_id,)
     ).fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+    messages = [dict(r) for r in rows]
+    order = {t: i for i, t in enumerate(MESSAGE_TYPES)}
+    messages.sort(key=lambda m: order.get(m["message_type"], len(MESSAGE_TYPES)))
+    return messages
 
 
 def delete_draft_messages(lead_id):
@@ -231,8 +251,8 @@ def set_message_status(message_id, status):
     conn.close()
 
 
-def all_messages_approved(lead_id):
-    """True when all three message types for this lead are approved."""
+def count_approved_messages(lead_id):
+    """How many message types for this lead are approved."""
     conn = get_conn()
     row = conn.execute(
         "SELECT COUNT(DISTINCT message_type) AS n FROM messages "
@@ -240,18 +260,38 @@ def all_messages_approved(lead_id):
         (lead_id,),
     ).fetchone()
     conn.close()
-    return row["n"] >= len(MESSAGE_TYPES)
+    return row["n"]
 
 
 def get_export_ready_leads():
-    """Leads whose three messages are all approved, hottest first."""
+    """Leads with at least one approved message, hottest first.
+
+    You rarely use every channel for every lead, so one approved
+    message is enough to export.
+    """
     conn = get_conn()
     rows = conn.execute(
         "SELECT l.* FROM leads l "
         "JOIN messages m ON m.lead_id = l.id AND m.status = 'approved' "
         "GROUP BY l.id "
-        "HAVING COUNT(DISTINCT m.message_type) >= 3 "
         "ORDER BY l.intent_score DESC"
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_sent_message_stats():
+    """Per message type: how many were exported, and the outcomes of their leads.
+
+    Used by the Results page and the learning batch. An exported message
+    counts as sent. Outcomes live on the lead, channel on outcome_channel.
+    """
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT m.message_type, l.outcome, l.outcome_channel, COUNT(*) AS n "
+        "FROM messages m JOIN leads l ON l.id = m.lead_id "
+        "WHERE m.status = 'exported' "
+        "GROUP BY m.message_type, l.outcome, l.outcome_channel"
     ).fetchall()
     conn.close()
     return [dict(r) for r in rows]

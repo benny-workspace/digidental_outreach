@@ -1,8 +1,8 @@
 """Export approved messages to text files.
 
-For every lead whose three messages are all approved, writes
-exports\\<clinic_slug>\\first_contact.txt, follow_up.txt, loom_script.txt,
-marks those messages exported, and writes one combined CSV.
+For every lead with at least one approved message, writes one text file
+per approved message into exports\\<clinic_slug>\\, marks those messages
+exported, and writes one combined CSV.
 
 Usage:
     python scripts\\export.py
@@ -23,8 +23,7 @@ EXPORTS_DIR = BASE_DIR / "exports"
 
 CSV_COLUMNS = [
     "clinic_name", "location", "phone", "email", "intent_score",
-    "first_contact", "follow_up", "loom_script",
-]
+] + list(db.MESSAGE_TYPES)
 
 
 def slugify(name):
@@ -46,7 +45,7 @@ def export_all():
             for m in db.get_messages_for_lead(lead["id"])
             if m["status"] == "approved"
         }
-        if any(t not in approved for t in db.MESSAGE_TYPES):
+        if not approved:
             continue
         slug = slugify(lead["clinic_name"])
         if slug in used_slugs:
@@ -62,7 +61,10 @@ def export_all():
             "intent_score": lead["intent_score"],
         }
         for message_type in db.MESSAGE_TYPES:
-            message = approved[message_type]
+            message = approved.get(message_type)
+            if message is None:
+                row[message_type] = ""
+                continue
             content = message["content_edited"] or message["content_generated"] or ""
             (folder / f"{message_type}.txt").write_text(content, encoding="utf-8")
             row[message_type] = content

@@ -18,10 +18,18 @@ Keep the black window open while you work. Close it when you are done.
 4. Work leads from the top score down. Generate drafts, edit, approve.
 5. Export: `python scripts\export.py` or the Export view in the app.
    Files land in `exports\`.
-6. After you send and hear back, record the outcome on the lead in the
-   workspace. The Results page shows reply rates so you can see what works.
-   When a wording works, edit the file in `prompts\`. Every future draft
-   inherits the change. That is how the system improves over time.
+6. After you send and hear back, record the outcome and the channel on the
+   lead in the workspace. The Results page shows reply rates per channel so
+   you can see what works. When a wording works, edit the file in `prompts\`.
+   Every future draft inherits the change. That is how the system improves.
+
+Each lead gets drafts for every channel: email, LinkedIn, Instagram, and
+Facebook, each with an outreach message and a follow-up sequence, plus the
+Loom script. Use the channels that fit the clinic. Approve only what you
+will actually send. One approved message is enough to export a lead.
+
+The database is a single file: `data\outreach.db`. Copy it to back up
+every lead, draft, and outcome.
 
 ## Phase 2: optional enrichment (needs Ollama, run it on purpose)
 
@@ -30,7 +38,13 @@ Never runs from the app. Run it from a terminal, for example before bed.
     python scripts\enrich_batch.py --limit 2   (test first)
     python scripts\enrich_batch.py             (full batch)
 
-Close heavy browser sessions before running a large batch.
+Once you have recorded outcomes on at least 5 leads, the learning batch
+turns that data into suggested template edits, written to
+`reference\template_suggestions.md` for you to review:
+
+    python scripts\learn_batch.py
+
+Close heavy browser sessions before running either batch.
 
 ## Copywriter skill sync
 
