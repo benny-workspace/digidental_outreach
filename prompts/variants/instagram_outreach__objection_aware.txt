@@ -1,0 +1,7 @@
+Hey {owner_first_name}.
+
+This is not about replacing your front desk. They are fine.
+
+It is about the calls that come in when they are gone. {angle_line}
+
+I built an AI overflow receptionist that catches those and books them. Want the 90 second recording? Reply DENTY.

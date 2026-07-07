@@ -1,0 +1,11 @@
+Subject: After hours calls at {clinic_name}
+
+Hi {owner_first_name},
+
+Quick one. {angle_line}
+
+I built Denty, an AI overflow receptionist for dental practices. It answers the calls the front desk cannot reach and books them straight into your calendar.
+
+Worth a 90 second Loom made for {clinic_name}?
+
+{founder_name}

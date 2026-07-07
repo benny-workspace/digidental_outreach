@@ -1,10 +1,13 @@
-"""SQLite layer for the DigiDental outreach system.
+"""SQLite layer for the outreach system.
 
 Every script and the app go through these functions. This file makes no
-network calls and has no dependencies outside the Python standard library.
-All functions are defined here before any other file imports them.
+network calls. All functions are defined here before any other file
+imports them. Data is tenant-aware: every row carries a tenant_id so the
+same product can later serve other businesses. The active tenant comes
+from config.yaml (key: tenant), default digidental.
 """
 
+import json
 import sqlite3
 from datetime import datetime
 from pathlib import Path
@@ -23,19 +26,53 @@ MESSAGE_TYPES = (
     "facebook_outreach", "facebook_follow_up",
     "loom_script",
 )
+OUTREACH_TYPES = (
+    "email_outreach", "linkedin_outreach",
+    "instagram_outreach", "facebook_outreach",
+)
 MESSAGE_STATUSES = ("draft", "approved", "exported")
 
-# Recorded by hand after sending, so the Results page can show what works.
+# Copy variants for outreach messages. "direct" is the base template.
+VARIANTS = ("direct", "short", "curiosity", "objection_aware")
+
+# Legacy per-lead outcomes, kept so old data keeps working.
 LEAD_OUTCOMES = ("no_reply", "replied", "call_booked", "closed_won", "not_interested")
 OUTREACH_CHANNELS = ("email", "linkedin", "instagram", "facebook", "other")
 
-LEAD_INSERT_COLUMNS = (
-    "clinic_name", "owner_first_name", "website", "location", "phone", "email",
-    "source", "notes", "evening_or_saturday_hours", "single_location",
-    "has_chatbot", "mentions_emergency_or_same_day", "review_count",
-    "has_after_hours_number", "already_has_ai_receptionist",
-    "intent_score", "status",
+# Detailed outcomes for the outreach log.
+OUTCOME_OPTIONS = (
+    "no_reply", "opened_only", "replied_positive", "replied_neutral",
+    "replied_negative", "booked_call", "closed_won", "closed_lost",
+    "not_interested", "wrong_contact", "follow_up_later",
 )
+POSITIVE_OUTCOMES = {"replied_positive", "booked_call", "closed_won"}
+LEGACY_POSITIVE_OUTCOMES = {"replied", "call_booked", "closed_won"}
+REPLY_QUALITIES = ("", "good", "neutral", "bad")
+OBJECTION_TYPES = (
+    "", "already has receptionist", "price", "scam fear", "too small",
+    "ai distrust", "timing", "other",
+)
+CONVERSION_STAGES = (
+    "", "contacted", "replied", "call_booked", "proposal",
+    "closed_won", "closed_lost",
+)
+
+_ACTIVE_TENANT = None
+
+
+def active_tenant():
+    """Tenant this app instance works with. From config.yaml, cached."""
+    global _ACTIVE_TENANT
+    if _ACTIVE_TENANT is None:
+        tenant = "digidental"
+        try:
+            import yaml
+            with open(BASE_DIR / "config.yaml", encoding="utf-8") as fh:
+                tenant = str((yaml.safe_load(fh) or {}).get("tenant", "digidental"))
+        except Exception:
+            pass
+        _ACTIVE_TENANT = tenant or "digidental"
+    return _ACTIVE_TENANT
 
 
 def now_iso():
@@ -47,6 +84,14 @@ def get_conn():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def _ensure_columns(conn, table, columns):
+    """Add any missing columns. Safe to run every start."""
+    existing = [row["name"] for row in conn.execute(f"PRAGMA table_info({table})")]
+    for name, declaration in columns.items():
+        if name not in existing:
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {declaration}")
 
 
 def init_db():
@@ -88,13 +133,59 @@ def init_db():
             created_at TEXT,
             updated_at TEXT
         );
+
+        CREATE TABLE IF NOT EXISTS import_batches (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tenant_id TEXT DEFAULT 'digidental',
+            source_file TEXT DEFAULT '',
+            mapping TEXT DEFAULT '{}',
+            rows_imported INTEGER DEFAULT 0,
+            rows_disqualified INTEGER DEFAULT 0,
+            rows_duplicate INTEGER DEFAULT 0,
+            warnings TEXT DEFAULT '[]',
+            created_at TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS outreach_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tenant_id TEXT DEFAULT 'digidental',
+            lead_id INTEGER NOT NULL REFERENCES leads(id),
+            channel TEXT DEFAULT '',
+            message_type TEXT DEFAULT '',
+            variant TEXT DEFAULT 'direct',
+            outcome TEXT DEFAULT '',
+            reply_quality TEXT DEFAULT '',
+            meeting_booked INTEGER DEFAULT 0,
+            objection_type TEXT DEFAULT '',
+            conversion_stage TEXT DEFAULT '',
+            rating INTEGER DEFAULT 0,
+            notes TEXT DEFAULT '',
+            synced INTEGER DEFAULT 0,
+            created_at TEXT
+        );
         """
     )
-    existing_columns = [row["name"] for row in conn.execute("PRAGMA table_info(leads)")]
-    if "outcome" not in existing_columns:
-        conn.execute("ALTER TABLE leads ADD COLUMN outcome TEXT DEFAULT ''")
-    if "outcome_channel" not in existing_columns:
-        conn.execute("ALTER TABLE leads ADD COLUMN outcome_channel TEXT DEFAULT ''")
+    _ensure_columns(conn, "leads", {
+        "outcome": "TEXT DEFAULT ''",
+        "outcome_channel": "TEXT DEFAULT ''",
+        "tenant_id": "TEXT DEFAULT 'digidental'",
+        "first_name": "TEXT DEFAULT ''",
+        "last_name": "TEXT DEFAULT ''",
+        "role_title": "TEXT DEFAULT ''",
+        "industry": "TEXT DEFAULT ''",
+        "niche": "TEXT DEFAULT ''",
+        "social_links": "TEXT DEFAULT '{}'",
+        "raw_columns": "TEXT DEFAULT '{}'",
+        "import_batch_id": "INTEGER",
+        "source_file": "TEXT DEFAULT ''",
+        "last_outreach_channel": "TEXT DEFAULT ''",
+        "last_outreach_date": "TEXT DEFAULT ''",
+        "outcome_notes": "TEXT DEFAULT ''",
+    })
+    _ensure_columns(conn, "messages", {
+        "tenant_id": "TEXT DEFAULT 'digidental'",
+        "variant": "TEXT DEFAULT 'direct'",
+    })
     # Messages created before the channel system map onto the email channel.
     conn.execute(
         "UPDATE messages SET message_type = 'email_outreach' "
@@ -108,8 +199,31 @@ def init_db():
     conn.close()
 
 
+LEAD_INSERT_COLUMNS = (
+    "tenant_id", "clinic_name", "owner_first_name", "first_name", "last_name",
+    "role_title", "industry", "niche", "website", "location", "phone", "email",
+    "social_links", "source", "notes", "raw_columns", "import_batch_id",
+    "source_file", "evening_or_saturday_hours", "single_location",
+    "has_chatbot", "mentions_emergency_or_same_day", "review_count",
+    "has_after_hours_number", "already_has_ai_receptionist",
+    "intent_score", "status",
+)
+
+LEAD_EDITABLE_COLUMNS = (
+    "owner_first_name", "first_name", "last_name", "role_title", "industry",
+    "niche", "website", "location", "phone", "email", "notes", "social_links",
+    "evening_or_saturday_hours", "single_location", "has_chatbot",
+    "mentions_emergency_or_same_day", "review_count",
+    "has_after_hours_number", "already_has_ai_receptionist",
+    "intent_score", "status", "outcome", "outcome_channel", "outcome_notes",
+    "last_outreach_channel", "last_outreach_date",
+)
+
+
 def insert_lead(fields):
     """Insert a lead. `fields` is a dict with keys from LEAD_INSERT_COLUMNS."""
+    fields = dict(fields)
+    fields.setdefault("tenant_id", active_tenant())
     values = [fields.get(col, "") for col in LEAD_INSERT_COLUMNS]
     placeholders = ", ".join("?" for _ in LEAD_INSERT_COLUMNS)
     columns = ", ".join(LEAD_INSERT_COLUMNS)
@@ -124,15 +238,6 @@ def insert_lead(fields):
     lead_id = cur.lastrowid
     conn.close()
     return lead_id
-
-
-LEAD_EDITABLE_COLUMNS = (
-    "owner_first_name", "website", "location", "phone", "email", "notes",
-    "evening_or_saturday_hours", "single_location", "has_chatbot",
-    "mentions_emergency_or_same_day", "review_count",
-    "has_after_hours_number", "already_has_ai_receptionist",
-    "intent_score", "status",
-)
 
 
 def update_lead_fields(lead_id, fields):
@@ -151,29 +256,31 @@ def update_lead_fields(lead_id, fields):
 
 
 def lead_exists(clinic_name, location):
-    """True if a lead with the same clinic name and location is already stored."""
+    """True if a lead with the same business name and location is already stored."""
     conn = get_conn()
     row = conn.execute(
-        "SELECT id FROM leads "
-        "WHERE lower(clinic_name) = lower(?) AND lower(location) = lower(?)",
-        ((clinic_name or "").strip(), (location or "").strip()),
+        "SELECT id FROM leads WHERE tenant_id = ? "
+        "AND lower(clinic_name) = lower(?) AND lower(location) = lower(?)",
+        (active_tenant(), (clinic_name or "").strip(), (location or "").strip()),
     ).fetchone()
     conn.close()
     return row is not None
 
 
 def get_leads(status=None):
-    """All leads, hottest first. Optionally filtered to one status."""
+    """All leads for the active tenant, hottest first."""
     conn = get_conn()
     if status:
         rows = conn.execute(
-            "SELECT * FROM leads WHERE status = ? "
+            "SELECT * FROM leads WHERE tenant_id = ? AND status = ? "
             "ORDER BY intent_score DESC, clinic_name",
-            (status,),
+            (active_tenant(), status),
         ).fetchall()
     else:
         rows = conn.execute(
-            "SELECT * FROM leads ORDER BY intent_score DESC, clinic_name"
+            "SELECT * FROM leads WHERE tenant_id = ? "
+            "ORDER BY intent_score DESC, clinic_name",
+            (active_tenant(),),
         ).fetchall()
     conn.close()
     return [dict(r) for r in rows]
@@ -187,23 +294,11 @@ def get_lead(lead_id):
 
 
 def set_lead_status(lead_id, status):
-    conn = get_conn()
-    conn.execute(
-        "UPDATE leads SET status = ?, updated_at = ? WHERE id = ?",
-        (status, now_iso(), lead_id),
-    )
-    conn.commit()
-    conn.close()
+    update_lead_fields(lead_id, {"status": status})
 
 
 def set_lead_outcome(lead_id, outcome, channel=""):
-    conn = get_conn()
-    conn.execute(
-        "UPDATE leads SET outcome = ?, outcome_channel = ?, updated_at = ? WHERE id = ?",
-        (outcome, channel, now_iso(), lead_id),
-    )
-    conn.commit()
-    conn.close()
+    update_lead_fields(lead_id, {"outcome": outcome, "outcome_channel": channel})
 
 
 def set_lead_enrichment(lead_id, summary, angle):
@@ -217,14 +312,43 @@ def set_lead_enrichment(lead_id, summary, angle):
     conn.close()
 
 
-def insert_message(lead_id, message_type, content):
+def create_import_batch(source_file, mapping, summary):
+    conn = get_conn()
+    cur = conn.execute(
+        "INSERT INTO import_batches "
+        "(tenant_id, source_file, mapping, rows_imported, rows_disqualified, "
+        "rows_duplicate, warnings, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            active_tenant(), source_file, json.dumps(mapping),
+            summary.get("imported", 0), summary.get("disqualified", 0),
+            summary.get("duplicates", 0), json.dumps(summary.get("errors", [])),
+            now_iso(),
+        ),
+    )
+    conn.commit()
+    batch_id = cur.lastrowid
+    conn.close()
+    return batch_id
+
+
+def get_import_batches():
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT * FROM import_batches WHERE tenant_id = ? ORDER BY id DESC",
+        (active_tenant(),),
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def insert_message(lead_id, message_type, content, variant="direct"):
     stamp = now_iso()
     conn = get_conn()
     cur = conn.execute(
         "INSERT INTO messages "
-        "(lead_id, message_type, content_generated, status, created_at, updated_at) "
-        "VALUES (?, ?, ?, 'draft', ?, ?)",
-        (lead_id, message_type, content, stamp, stamp),
+        "(tenant_id, lead_id, message_type, variant, content_generated, "
+        "status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 'draft', ?, ?)",
+        (active_tenant(), lead_id, message_type, variant, content, stamp, stamp),
     )
     conn.commit()
     message_id = cur.lastrowid
@@ -245,12 +369,24 @@ def get_messages_for_lead(lead_id):
     return messages
 
 
-def delete_draft_messages(lead_id):
-    """Remove drafts only. Approved and exported messages are never deleted."""
+def delete_draft_messages(lead_id, message_type=None):
+    """Remove drafts only. Approved and exported messages are never deleted.
+
+    Pass message_type to clear just one channel's draft, so regenerating
+    one channel never resets the others.
+    """
     conn = get_conn()
-    conn.execute(
-        "DELETE FROM messages WHERE lead_id = ? AND status = 'draft'", (lead_id,)
-    )
+    if message_type:
+        conn.execute(
+            "DELETE FROM messages WHERE lead_id = ? AND status = 'draft' "
+            "AND message_type = ?",
+            (lead_id, message_type),
+        )
+    else:
+        conn.execute(
+            "DELETE FROM messages WHERE lead_id = ? AND status = 'draft'",
+            (lead_id,),
+        )
     conn.commit()
     conn.close()
 
@@ -276,7 +412,6 @@ def set_message_status(message_id, status):
 
 
 def count_approved_messages(lead_id):
-    """How many message types for this lead are approved."""
     conn = get_conn()
     row = conn.execute(
         "SELECT COUNT(DISTINCT message_type) AS n FROM messages "
@@ -288,34 +423,116 @@ def count_approved_messages(lead_id):
 
 
 def get_export_ready_leads():
-    """Leads with at least one approved message, hottest first.
-
-    You rarely use every channel for every lead, so one approved
-    message is enough to export.
-    """
+    """Leads with at least one approved message, hottest first."""
     conn = get_conn()
     rows = conn.execute(
         "SELECT l.* FROM leads l "
         "JOIN messages m ON m.lead_id = l.id AND m.status = 'approved' "
-        "GROUP BY l.id "
-        "ORDER BY l.intent_score DESC"
+        "WHERE l.tenant_id = ? "
+        "GROUP BY l.id ORDER BY l.intent_score DESC",
+        (active_tenant(),),
     ).fetchall()
     conn.close()
     return [dict(r) for r in rows]
 
 
-def get_sent_message_stats():
-    """Per message type: how many were exported, and the outcomes of their leads.
+def log_outreach(fields):
+    """Record one outreach result. Also updates the lead's quick-view fields."""
+    stamp = now_iso()
+    conn = get_conn()
+    conn.execute(
+        "INSERT INTO outreach_log "
+        "(tenant_id, lead_id, channel, message_type, variant, outcome, "
+        "reply_quality, meeting_booked, objection_type, conversion_stage, "
+        "rating, notes, synced, created_at) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)",
+        (
+            active_tenant(), fields["lead_id"], fields.get("channel", ""),
+            fields.get("message_type", ""), fields.get("variant", "direct"),
+            fields.get("outcome", ""), fields.get("reply_quality", ""),
+            1 if fields.get("meeting_booked") else 0,
+            fields.get("objection_type", ""), fields.get("conversion_stage", ""),
+            int(fields.get("rating", 0) or 0), fields.get("notes", ""), stamp,
+        ),
+    )
+    conn.commit()
+    conn.close()
+    legacy = {
+        "replied_positive": "replied", "replied_neutral": "replied",
+        "replied_negative": "replied", "booked_call": "call_booked",
+        "closed_won": "closed_won", "not_interested": "not_interested",
+    }.get(fields.get("outcome", ""), "no_reply")
+    update_lead_fields(fields["lead_id"], {
+        "outcome": legacy,
+        "outcome_channel": fields.get("channel", ""),
+        "outcome_notes": fields.get("notes", ""),
+        "last_outreach_channel": fields.get("channel", ""),
+        "last_outreach_date": stamp,
+    })
 
-    Used by the Results page and the learning batch. An exported message
-    counts as sent. Outcomes live on the lead, channel on outcome_channel.
+
+def get_outreach_logs():
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT * FROM outreach_log WHERE tenant_id = ? ORDER BY id DESC",
+        (active_tenant(),),
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def count_unsynced_logs():
+    conn = get_conn()
+    row = conn.execute(
+        "SELECT COUNT(*) AS n FROM outreach_log WHERE tenant_id = ? AND synced = 0",
+        (active_tenant(),),
+    ).fetchone()
+    conn.close()
+    return row["n"]
+
+
+def mark_logs_synced():
+    conn = get_conn()
+    conn.execute(
+        "UPDATE outreach_log SET synced = 1 WHERE tenant_id = ? AND synced = 0",
+        (active_tenant(),),
+    )
+    conn.commit()
+    conn.close()
+
+
+def variant_stats():
+    """Per (message_type, variant): sends and positive outcomes from the log.
+
+    This is the whole learning model: explainable win rates. The ranker in
+    generate_drafts turns these into a preferred variant per channel.
     """
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT message_type, variant, outcome, COUNT(*) AS n "
+        "FROM outreach_log WHERE tenant_id = ? "
+        "GROUP BY message_type, variant, outcome",
+        (active_tenant(),),
+    ).fetchall()
+    conn.close()
+    stats = {}
+    for row in rows:
+        key = (row["message_type"], row["variant"] or "direct")
+        wins, total = stats.get(key, (0, 0))
+        is_win = row["outcome"] in POSITIVE_OUTCOMES
+        stats[key] = (wins + (row["n"] if is_win else 0), total + row["n"])
+    return stats
+
+
+def get_sent_message_stats():
+    """Kept for the learning batch: exported messages joined with lead outcomes."""
     conn = get_conn()
     rows = conn.execute(
         "SELECT m.message_type, l.outcome, l.outcome_channel, COUNT(*) AS n "
         "FROM messages m JOIN leads l ON l.id = m.lead_id "
-        "WHERE m.status = 'exported' "
-        "GROUP BY m.message_type, l.outcome, l.outcome_channel"
+        "WHERE m.status = 'exported' AND l.tenant_id = ? "
+        "GROUP BY m.message_type, l.outcome, l.outcome_channel",
+        (active_tenant(),),
     ).fetchall()
     conn.close()
     return [dict(r) for r in rows]

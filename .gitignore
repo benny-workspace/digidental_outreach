@@ -25,3 +25,10 @@ skill/
 
 # Local secrets (Supabase keys for the planner sync). Never commit.
 config.local.yaml
+
+# Live tenant business data stays local while this repo is public.
+# It holds pricing strategy, target customer, and sales lines.
+# The example tenant is committed as the template.
+tenants/*
+!tenants/example/
+!tenants/example/**

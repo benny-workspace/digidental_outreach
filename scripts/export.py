@@ -82,6 +82,39 @@ def export_all():
     return {"folders": folders, "csv_path": csv_path}
 
 
+def _rows_to_csv(rows, columns):
+    """Render a list of dicts as CSV text, only the given columns."""
+    import io
+    buffer = io.StringIO()
+    writer = csv.DictWriter(buffer, fieldnames=columns, extrasaction="ignore")
+    writer.writeheader()
+    for row in rows:
+        writer.writerow({c: row.get(c, "") for c in columns})
+    return buffer.getvalue()
+
+
+LEAD_EXPORT_COLUMNS = [
+    "id", "clinic_name", "first_name", "last_name", "role_title", "industry",
+    "niche", "email", "phone", "website", "location", "intent_score", "status",
+    "outcome", "outcome_channel", "last_outreach_channel", "last_outreach_date",
+    "source_file", "import_batch_id", "created_at", "updated_at",
+]
+
+LOG_EXPORT_COLUMNS = [
+    "created_at", "lead_id", "channel", "message_type", "variant", "outcome",
+    "reply_quality", "meeting_booked", "objection_type", "conversion_stage",
+    "rating", "notes", "synced",
+]
+
+
+def leads_to_csv(rows):
+    return _rows_to_csv(rows, LEAD_EXPORT_COLUMNS)
+
+
+def logs_to_csv(rows):
+    return _rows_to_csv(rows, LOG_EXPORT_COLUMNS)
+
+
 def main():
     result = export_all()
     if not result["folders"]:

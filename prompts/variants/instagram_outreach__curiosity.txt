@@ -1,0 +1,7 @@
+Hey {owner_first_name}, odd question.
+
+Ever called {clinic_name} after hours just to hear what your patients hear?
+
+Most owners try it once and go quiet for a second.
+
+I built something for that moment. 90 second recording, no forms, no pitch. Reply DENTY if you want it.

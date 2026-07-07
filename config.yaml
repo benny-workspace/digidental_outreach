@@ -1,4 +1,12 @@
-# Edit founder_name before generating drafts. It appears in every message.
+# Active business. Its data lives in tenants/<tenant>/ and the Admin page.
+# Change this to run the same app for a different business.
+tenant: "digidental"
+
+# Optional. Set a PIN to lock the Admin page. Leave empty for open access.
+admin_pin: ""
+
+# Fallbacks. The Admin company profile overrides these when set.
+# Edit founder_name in the Admin page, not here, once the app is running.
 founder_name: "Benny"
 
 # Used in the Loom script. Change it if you know the clinic's calendar name.

@@ -1,0 +1,5 @@
+Hey {owner_first_name}. One question.
+
+How many calls does {clinic_name} miss after 5 PM?
+
+I built an AI overflow receptionist for dental practices. It catches those calls and books them. Happy to send a 90 second Loom. Want it?

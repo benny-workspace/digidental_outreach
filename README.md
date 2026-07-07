@@ -7,29 +7,47 @@ A local outreach system for Denty. Everything runs on this laptop. No paid APIs,
 Double-click `Start Outreach.bat`. The browser opens by itself.
 Keep the black window open while you work. Close it when you are done.
 
-## Phase 1: the daily workflow (no model, no internet needed)
+## The pages (sidebar, top to bottom)
 
-1. Build a lead CSV by hand from Google Maps, Yelp, or Apollo. Copy the columns
-   from `sample_data/sample_leads.csv`. Add `owner_first_name` as an extra
-   column when you know it. Leave a signal column blank if you are not sure.
-2. Import and score: `python scripts\import_leads.py path\to\leads.csv`
-   or upload the CSV inside the app.
-3. Open the app: `streamlit run app.py`
-4. Work leads from the top score down. Generate drafts, edit, approve.
-5. Export: `python scripts\export.py` or the Export view in the app.
-   Files land in `exports\`.
-6. After you send and hear back, record the outcome and the channel on the
-   lead in the workspace. The Results page shows reply rates per channel so
-   you can see what works. When a wording works, edit the file in `prompts\`.
-   Every future draft inherits the change. That is how the system improves.
+1. **Import** — upload any CSV. The app reads the headers, guesses what each
+   column means with a confidence score, and shows a mapping you can correct
+   before importing. Messy scraped files are fine. Every raw column is kept.
+2. **Leads** — every lead, sorted by score. Work the top down.
+3. **Lead workspace** — pick a lead, edit its details and signals, then
+   generate drafts for all channels. Each outreach channel has a copy angle
+   selector (direct, short, curiosity, objection-aware) and a Regenerate
+   button that only touches that channel. A grey box under each message has a
+   one-click copy button. Approve what you will send.
+4. **Feedback** — after you send, log the outcome (channel, angle, reply
+   quality, objection, meeting booked, rating, notes). This is the learning
+   loop. The workspace then recommends the angle with the best win rate, and
+   tells you why in plain numbers.
+5. **Results** — reply rate by channel, best angle by channel, objections
+   heard, calls booked, conversion per import batch.
+6. **Export** — approved copy to text files, or filtered CSV downloads of
+   leads and outcomes.
+7. **Reference** — your sales line library by category (pain, curiosity,
+   objection, proof, CTA, follow-up). Add, mark preferred, or retire lines.
+8. **Admin** — edit the company profile: name, voice, offer, pricing, pain
+   points, proof, prohibited phrases, channel rules. No code, no Claude. Every
+   save keeps a restorable version. Lock it with `admin_pin` in config.yaml.
 
-Each lead gets drafts for every channel: email, LinkedIn, Instagram, and
-Facebook, each with an outreach message and a follow-up sequence, plus the
-Loom script. Use the channels that fit the clinic. Approve only what you
-will actually send. One approved message is enough to export a lead.
+The database is a single file: `data\outreach.db`. Copy it to back up every
+lead, draft, outcome, and import batch.
 
-The database is a single file: `data\outreach.db`. Copy it to back up
-every lead, draft, and outcome.
+## Offline-safe
+
+Everything above works with no internet. New feedback is saved locally and
+the sidebar shows how many outcomes are unsynced. The three scripts that need
+the internet (enrichment, learning batch, planner sync) run from a terminal on
+purpose, never from a button.
+
+## Selling this to another business later
+
+The app is tenant-aware. Business specifics live in `tenants/<tenant>/` and
+the Admin page, not in code. To run it for a different business: set `tenant`
+in config.yaml to a new name, start the app, and fill in the Admin profile.
+Its leads, templates, results, and exports stay separate.
 
 ## Phase 2: optional enrichment (needs Ollama, run it on purpose)
 

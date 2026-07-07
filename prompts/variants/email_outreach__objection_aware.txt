@@ -1,0 +1,15 @@
+Subject: Your receptionist is not the problem
+
+Hi {owner_first_name},
+
+Your front desk is probably great. That is not the gap.
+
+The gap is after 5 PM, during lunch, and on Saturday morning. {angle_line}
+
+Denty is an AI overflow receptionist. It only handles the calls your team physically cannot reach, and books them into your calendar. Nobody gets replaced. The team just stops losing bookings to voicemail.
+
+If Denty books zero after hours appointments in the first 30 days, the setup fee is refunded.
+
+Want a 90 second Loom showing how it would work for {clinic_name}?
+
+{founder_name}
