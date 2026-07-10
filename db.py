@@ -255,6 +255,21 @@ def update_lead_fields(lead_id, fields):
     conn.close()
 
 
+def delete_leads(lead_ids):
+    """Permanently delete leads plus their messages and outcome logs."""
+    ids = [int(i) for i in lead_ids]
+    if not ids:
+        return 0
+    marks = ",".join("?" for _ in ids)
+    conn = get_conn()
+    conn.execute(f"DELETE FROM messages WHERE lead_id IN ({marks})", ids)
+    conn.execute(f"DELETE FROM outreach_log WHERE lead_id IN ({marks})", ids)
+    cur = conn.execute(f"DELETE FROM leads WHERE id IN ({marks})", ids)
+    conn.commit()
+    conn.close()
+    return cur.rowcount
+
+
 def lead_exists(clinic_name, location):
     """True if a lead with the same business name and location is already stored."""
     conn = get_conn()

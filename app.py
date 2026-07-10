@@ -32,6 +32,28 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# Minimal look: hide Streamlit chrome, tighten spacing, soften panels.
+st.markdown(
+    """
+    <style>
+    #MainMenu, footer, [data-testid="stToolbar"] {visibility: hidden;}
+    .block-container {padding-top: 2rem; padding-bottom: 3rem; max-width: 1150px;}
+    h1 {font-weight: 650; letter-spacing: -0.02em;}
+    h2, h3 {font-weight: 600;}
+    [data-testid="stMetric"] {
+        background: rgba(128,128,128,0.07);
+        border-radius: 10px;
+        padding: 12px 16px;
+    }
+    [data-testid="stSidebar"] {min-width: 250px;}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Categorical chart palette (validated reference set, fixed slot order).
+CHART_PALETTE = ["#2a78d6", "#1baf7a", "#eda100", "#008300", "#4a3aa7", "#e34948"]
+
 MESSAGE_LABELS = {
     "email_outreach": "Email outreach",
     "email_follow_up": "Email follow-up sequence",
@@ -153,23 +175,94 @@ def _show_import_history():
 
 def leads_page():
     st.title("Leads")
-    leads = db.get_leads()
-    if not leads:
+    all_leads = db.get_leads()
+    if not all_leads:
         st.info("No leads yet. Use the Import page to add some.")
         return
     chosen_statuses = st.multiselect(
         "Filter by status", list(db.LEAD_STATUSES), default=list(db.LEAD_STATUSES)
     )
-    leads = [l for l in leads if l["status"] in chosen_statuses]
+    visible = [l for l in all_leads if l["status"] in chosen_statuses]
     table = [{
         "ID": l["id"], "Score": l["intent_score"], "Business": l["clinic_name"],
         "Status": l["status"], "Outcome": l.get("outcome") or "",
         "Location": l["location"], "Niche": l.get("niche") or "",
         "Enriched": "yes" if (l["enrichment_angle"] or "").strip() else "",
         "Website": l["website"],
-    } for l in leads]
-    st.caption("Sorted by score, highest first. Work the top of the list.")
-    st.dataframe(table, use_container_width=True, hide_index=True)
+    } for l in visible]
+    st.caption(
+        f"{len(visible)} lead(s), sorted by score. Click rows to select, "
+        "then delete one or many below."
+    )
+    event = st.dataframe(
+        table, use_container_width=True, hide_index=True,
+        on_select="rerun", selection_mode="multi-row", key="leads_table",
+    )
+    selected_rows = list(event.selection.rows) if event is not None else []
+    if selected_rows:
+        selected_ids = [visible[i]["id"] for i in selected_rows if i < len(visible)]
+        preview = ", ".join(visible[i]["clinic_name"] for i in selected_rows[:5] if i < len(visible))
+        if len(selected_ids) > 5:
+            preview += f" and {len(selected_ids) - 5} more"
+        st.warning(f"Selected: {preview}")
+        sure = st.checkbox(
+            f"Yes, permanently delete {len(selected_ids)} lead(s) "
+            "with their drafts and logged results"
+        )
+        if st.button("Delete selected", type="primary", disabled=not sure):
+            deleted = db.delete_leads(selected_ids)
+            st.success(f"Deleted {deleted} lead(s).")
+            st.rerun()
+
+    with st.expander("Auto-clean: delete leads by rule"):
+        st.caption(
+            "Leads matching ALL chosen conditions are deleted. "
+            "You see the matches before anything happens."
+        )
+        c1, c2, c3 = st.columns(3)
+        rule_statuses = c1.multiselect("Status is", list(db.LEAD_STATUSES), key="ac_status")
+        rule_outcomes = c2.multiselect(
+            "Outcome is", ["not set"] + list(db.LEAD_OUTCOMES), key="ac_outcome"
+        )
+        batches = db.get_import_batches()
+        batch_labels = {f"#{b['id']} {b['source_file']}": b["id"] for b in batches}
+        rule_batches = c3.multiselect("From import batch", list(batch_labels), key="ac_batch")
+        use_score = st.checkbox("Also require score at or below a cap", key="ac_use_score")
+        score_cap = None
+        if use_score:
+            score_cap = st.number_input("Score cap", value=0, key="ac_score")
+
+        any_rule = bool(rule_statuses or rule_outcomes or rule_batches or use_score)
+        if not any_rule:
+            st.caption("Pick at least one condition to build the rule.")
+            return
+        matched = []
+        wanted_batches = [batch_labels[b] for b in rule_batches]
+        for l in all_leads:
+            if rule_statuses and l["status"] not in rule_statuses:
+                continue
+            if rule_outcomes:
+                value = (l.get("outcome") or "").strip() or "not set"
+                if value not in rule_outcomes:
+                    continue
+            if wanted_batches and l.get("import_batch_id") not in wanted_batches:
+                continue
+            if use_score and l["intent_score"] > score_cap:
+                continue
+            matched.append(l)
+        st.write(f"Rule matches {len(matched)} lead(s).")
+        for l in matched[:10]:
+            st.caption(f"- {l['clinic_name']} (score {l['intent_score']}, {l['status']})")
+        if len(matched) > 10:
+            st.caption(f"...and {len(matched) - 10} more")
+        if matched:
+            confirm = st.checkbox(
+                f"Yes, permanently delete these {len(matched)} lead(s)", key="ac_confirm"
+            )
+            if st.button("Delete matched leads", disabled=not confirm, key="ac_delete"):
+                deleted = db.delete_leads([l["id"] for l in matched])
+                st.success(f"Deleted {deleted} lead(s).")
+                st.rerun()
 
 
 # ------------------------------------------------------------- Lead workspace
@@ -213,6 +306,14 @@ def lead_edit_form(lead):
                     updated["status"] = "imported"
                 db.update_lead_fields(lead["id"], updated)
                 st.rerun()
+        st.divider()
+        sure = st.checkbox(
+            "Yes, permanently delete this lead with its drafts and logged results",
+            key=f"delok_{lead['id']}",
+        )
+        if st.button("Delete this lead", key=f"dellead_{lead['id']}", disabled=not sure):
+            db.delete_leads([lead["id"]])
+            st.rerun()
 
 
 def render_message(message, lead):
@@ -382,13 +483,96 @@ def feedback_page():
 
 # --------------------------------------------------------------- Results page
 
+def donut_chart(title, pairs):
+    """Donut with fixed slot colors, max 5 slices plus Other, spacer gaps.
+
+    The exact numbers always appear in the tables on this page, which
+    covers readers who cannot rely on the colors alone.
+    """
+    pairs = [(label, count) for label, count in pairs if count > 0]
+    if not pairs:
+        st.caption(f"{title}: no data yet.")
+        return
+    pairs.sort(key=lambda p: -p[1])
+    if len(pairs) > 5:
+        head, tail = pairs[:5], pairs[5:]
+        head.append(("other", sum(c for _, c in tail)))
+        pairs = head
+    labels = [p[0] for p in pairs]
+    spec = {
+        "data": {"values": [{"label": l, "value": c} for l, c in pairs]},
+        "mark": {"type": "arc", "innerRadius": 55, "padAngle": 0.02},
+        "encoding": {
+            "theta": {"field": "value", "type": "quantitative"},
+            "color": {
+                "field": "label", "type": "nominal",
+                "scale": {"domain": labels, "range": CHART_PALETTE[:len(labels)]},
+                "legend": {"title": None, "orient": "right"},
+            },
+            "tooltip": [
+                {"field": "label", "title": "Group"},
+                {"field": "value", "title": "Count"},
+            ],
+        },
+        "view": {"stroke": None},
+    }
+    st.markdown(f"**{title}**")
+    st.vega_lite_chart(spec, use_container_width=True)
+
+
+PIPELINE_STAGES = [
+    ("Imported", "imported"),
+    ("Drafts ready", "drafts_generated"),
+    ("Reviewed", "reviewed"),
+    ("Sent", "exported"),
+    ("Disqualified", "skipped"),
+]
+
+
+def pipeline_kanban(leads):
+    """Read-only kanban of the pipeline. Status moves happen in the workflow."""
+    st.subheader("Pipeline")
+    columns = st.columns(len(PIPELINE_STAGES))
+    for column, (label, status_key) in zip(columns, PIPELINE_STAGES):
+        group = [l for l in leads if l["status"] == status_key]
+        column.markdown(f"**{label}**")
+        column.caption(f"{len(group)} lead(s)")
+        for l in group[:8]:
+            with column.container(border=True):
+                st.markdown(f"**{l['clinic_name'][:30]}**")
+                meta = f"score {l['intent_score']}"
+                if (l.get("outcome") or "").strip():
+                    meta += f" · {l['outcome']}"
+                st.caption(meta)
+        if len(group) > 8:
+            column.caption(f"+{len(group) - 8} more")
+
+
 def results_page():
     st.title("Results")
     logs = db.get_outreach_logs()
     leads = db.get_leads()
+
+    pipeline_kanban(leads)
+    st.divider()
+
     if not logs:
         st.info("No outcomes logged yet. Use the Feedback page after you send.")
         return
+
+    chart_left, chart_right = st.columns(2)
+    with chart_left:
+        outcome_counts = {}
+        for l in logs:
+            key = l["outcome"] or "not set"
+            outcome_counts[key] = outcome_counts.get(key, 0) + 1
+        donut_chart("Outcome mix", list(outcome_counts.items()))
+    with chart_right:
+        channel_counts = {}
+        for l in logs:
+            key = l["channel"] or "unknown"
+            channel_counts[key] = channel_counts.get(key, 0) + 1
+        donut_chart("Outreach volume by channel", list(channel_counts.items()))
 
     positive = db.POSITIVE_OUTCOMES
 
@@ -564,9 +748,22 @@ def admin_gate():
 
 
 def _parse_pairs(text):
+    """Parse `key: value` lines. A bare URL gets its platform inferred,
+    so pasting a link alone does the right thing."""
     pairs = {}
     for line in text.splitlines():
-        if ":" in line:
+        line = line.strip()
+        if not line:
+            continue
+        lowered = line.lower()
+        if lowered.startswith(("http://", "https://", "www.")):
+            platform = next(
+                (name for name in ("facebook", "instagram", "linkedin", "tiktok", "whatsapp")
+                 if name in lowered),
+                "website",
+            )
+            pairs[platform] = line
+        elif ":" in line:
             k, v = line.split(":", 1)
             if k.strip():
                 pairs[k.strip()] = v.strip()
