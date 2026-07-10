@@ -49,6 +49,8 @@ st.markdown(
         padding: 12px 16px;
     }
     [data-testid="stSidebar"] {min-width: 250px;}
+    [data-testid="stSidebar"] [data-testid="StyledFullScreenButton"],
+    [data-testid="stSidebar"] button[title="View fullscreen"] {display: none;}
     </style>
     """,
     unsafe_allow_html=True,
