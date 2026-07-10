@@ -1,10 +1,11 @@
-"""DigiDental outreach app. Runs locally with Streamlit.
+"""Outreach Studio. A local outreach system that runs with Streamlit.
 
 This file never calls Ollama and never makes a network request. Enrichment,
 the learning batch, and the planner sync are separate command line scripts.
 
-Pages are tenant-aware. Business specifics come from the company profile
-(company.py), not from this code, so the same app can serve other tenants.
+Pages are tenant-aware. Business specifics come from the active workspace
+profile (company.py), not from this code, so the same app serves any tenant.
+The default workspace is DigiDental.
 """
 
 import json
@@ -27,8 +28,10 @@ import import_leads
 
 db.init_db()
 
+_page_icon = BASE_DIR / "assets" / "logo_transparent.png"
 st.set_page_config(
     page_title="Outreach Studio", layout="wide",
+    page_icon=str(_page_icon) if _page_icon.exists() else None,
     initial_sidebar_state="expanded",
 )
 
@@ -122,7 +125,12 @@ def import_page():
     )
     field_options = ["(raw only)"] + list(csv_mapper.CANONICAL_FIELDS)
     chosen = {}
-    for i, proposal in enumerate(proposals):
+    # Wide exports (Apify has 700+ columns) would drown the review in
+    # noise. Show mapped columns for editing; unmapped stay raw.
+    show_all = len(proposals) <= 40
+    editable = proposals if show_all else [p for p in proposals if p["field"]]
+    hidden = [] if show_all else [p for p in proposals if not p["field"]]
+    for i, proposal in enumerate(editable):
         col_h, col_map, col_conf = st.columns([3, 3, 4])
         col_h.markdown(f"**{proposal['header']}**")
         default = proposal["field"] or "(raw only)"
@@ -135,6 +143,12 @@ def import_page():
         conf = proposal["confidence"]
         flag = "" if conf >= csv_mapper.LOW_CONFIDENCE or proposal["field"] is None else "  (check this)"
         col_conf.caption(f"auto: {conf:.2f} {proposal['reason']}{flag}")
+    if hidden:
+        with st.expander(f"{len(hidden)} unmapped columns (kept as raw data on every lead)"):
+            names = ", ".join(p["header"] for p in hidden[:120])
+            if len(hidden) > 120:
+                names += f" ... and {len(hidden) - 120} more"
+            st.caption(names)
 
     mapped_fields = [f for f in chosen.values() if f]
     if "business_name" not in mapped_fields and "contact_name" not in mapped_fields:
@@ -837,8 +851,15 @@ def admin_page():
 # --------------------------------------------------------------------- Router
 
 _profile = company.load_profile()
-_brand = _profile.get("company_name") or "Outreach"
-st.sidebar.title(f"{_brand} Outreach")
+_logo = BASE_DIR / "assets" / "logo_transparent.png"
+if _logo.exists():
+    lc1, lc2 = st.sidebar.columns([1, 3])
+    lc1.image(str(_logo), use_container_width=True)
+    lc2.markdown("### Outreach Studio")
+else:
+    st.sidebar.title("Outreach Studio")
+_tenant_name = _profile.get("company_name") or db.active_tenant()
+st.sidebar.caption(f"Active workspace: {_tenant_name}")
 
 _unsynced = db.count_unsynced_logs()
 if _unsynced:

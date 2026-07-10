@@ -13,6 +13,7 @@ No LLM, no network calls, instant.
 """
 
 import argparse
+import re
 import sys
 from collections import defaultdict
 from datetime import date, datetime
@@ -77,14 +78,27 @@ def previous_contact_date(lead_id):
     return format_day(date.today())
 
 
+def angle_rules():
+    """Angle copy for the active tenant. The profile's `angles` key wins;
+    the built-in set is the DigiDental fallback so nothing ever breaks."""
+    profile_angles = company.load_profile().get("angles") or {}
+    rules = {}
+    for key, fallback in DETERMINISTIC_ANGLES.items():
+        merged = dict(fallback)
+        merged.update(profile_angles.get(key) or {})
+        rules[key] = merged
+    return rules
+
+
 def pick_angles(lead):
     """Deterministic angles by default. Enrichment wins when present."""
+    rules = angle_rules()
     if lead["evening_or_saturday_hours"] == "Y":
-        angles = dict(DETERMINISTIC_ANGLES["evening"])
+        angles = dict(rules["evening"])
     elif lead["mentions_emergency_or_same_day"] == "Y":
-        angles = dict(DETERMINISTIC_ANGLES["emergency"])
+        angles = dict(rules["emergency"])
     else:
-        angles = dict(DETERMINISTIC_ANGLES["default"])
+        angles = dict(rules["default"])
     enriched_angle = (lead.get("enrichment_angle") or "").strip()
     if enriched_angle:
         angles["angle_line"] = enriched_angle
@@ -112,27 +126,88 @@ def best_variant(message_type):
     return best
 
 
+# --- insertion hygiene: every value is cleaned before it enters copy -------
+
+BUSINESS_SUFFIX_RE = re.compile(
+    r"\s*,?\s*(inc\.?|llc\.?|ltd\.?|pllc|p\.?c\.?|corp\.?|co\.)\s*$",
+    re.IGNORECASE,
+)
+
+
+def clean_fragment(text):
+    """Collapse whitespace and replace dashes the brand rules forbid."""
+    text = (text or "").replace("—", ", ").replace("–", ", ")
+    return " ".join(text.split()).strip()
+
+
+def as_sentence(text):
+    """A cleaned fragment as a full sentence: ends with punctuation."""
+    text = clean_fragment(text)
+    if not text:
+        return ""
+    if text[-1] not in ".!?":
+        text += "."
+    return text[0].upper() + text[1:]
+
+
+def first_name_only(value):
+    """First token of a name, capitalized. 'maria lopez' becomes 'Maria'."""
+    tokens = (value or "").strip().split()
+    if not tokens:
+        return ""
+    name = tokens[0].strip(",.")
+    return (name[:1].upper() + name[1:]) if name else ""
+
+
+def natural_business_name(raw):
+    """A copy-friendly business name. The database keeps the full name.
+
+    'Sierra Vista Family Dental Center - Chiricahua Community Health
+    Centers, Inc.' reads as 'Sierra Vista Family Dental Center' in a
+    message, which is how the owner says it out loud.
+    """
+    name = clean_fragment(raw)
+    for separator in (" - ", " | "):
+        head = name.split(separator)[0].strip()
+        if len(head.split()) >= 2:
+            name = head
+    while True:
+        stripped = BUSINESS_SUFFIX_RE.sub("", name).strip(" ,")
+        if stripped == name or not stripped:
+            break
+        name = stripped
+    return name or clean_fragment(raw)
+
+
+def polish(content):
+    """Final pass over a filled template: no stray spacing artifacts."""
+    content = re.sub(r"[ \t]+\n", "\n", content)
+    content = re.sub(r"\n{3,}", "\n\n", content)
+    return content.strip() + "\n"
+
+
 def build_context(lead, config):
-    """All template values. defaultdict(str) so a missing key renders empty."""
+    """All template values, cleaned. defaultdict(str) so a missing key
+    renders empty instead of crashing."""
     profile = company.load_profile()
     angles = pick_angles(lead)
     owner = (
-        (lead.get("owner_first_name") or "").strip()
-        or (lead.get("first_name") or "").strip()
+        first_name_only(lead.get("owner_first_name"))
+        or first_name_only(lead.get("first_name"))
         or "there"
     )
     context = {
         "owner_first_name": owner,
-        "clinic_name": lead["clinic_name"],
-        "founder_name": str(profile.get("founder_name") or config.get("founder_name", "")),
-        "company_name": str(profile.get("company_name", "")),
-        "calendar_name": str(profile.get("calendar_name") or config.get("calendar_name", "your calendar")),
+        "clinic_name": natural_business_name(lead["clinic_name"]),
+        "founder_name": clean_fragment(profile.get("founder_name") or config.get("founder_name", "")),
+        "company_name": clean_fragment(profile.get("company_name", "")),
+        "calendar_name": clean_fragment(profile.get("calendar_name") or config.get("calendar_name", "your calendar")),
         "previous_date": previous_contact_date(lead["id"]),
-        "angle_line": angles["angle_line"],
-        "pain_point": angles["pain_point"],
-        "one_line_value_prop": angles["one_line_value_prop"],
-        "location": lead.get("location") or "",
-        "niche": lead.get("niche") or "",
+        "angle_line": as_sentence(angles["angle_line"]),
+        "pain_point": clean_fragment(angles["pain_point"]).rstrip("."),
+        "one_line_value_prop": as_sentence(angles["one_line_value_prop"]),
+        "location": clean_fragment(lead.get("location")),
+        "niche": clean_fragment(lead.get("niche")),
     }
     return defaultdict(str, context)
 
@@ -162,7 +237,7 @@ def generate_for_lead(lead_id, only_type=None, variant=None):
             chosen = variant or best_variant(message_type)[0]
         else:
             chosen = "direct"
-        content = load_template(message_type, chosen).format_map(context)
+        content = polish(load_template(message_type, chosen).format_map(context))
         db.insert_message(lead_id, message_type, content, variant=chosen)
         created.append((message_type, chosen))
     if created and lead["status"] in ("imported", "skipped"):

@@ -176,6 +176,7 @@ def import_with_mapping(csv_path, header_map, source_file=None):
             summary["disqualified"] += 1
         else:
             summary["imported"] += 1
+    db.update_import_batch(batch_id, summary)
     summary["batch_id"] = batch_id
     return summary
 

@@ -1,11 +1,22 @@
-# DigiDental Outreach
+# Outreach Studio
 
-A local outreach system for Denty. Everything runs on this laptop. No paid APIs, no recurring cost.
+A local lead outreach system. Everything runs on this laptop. No paid APIs,
+no recurring cost. DigiDental is the active workspace; the software itself
+is business-agnostic (see the tenant section below).
 
 ## Opening the app
 
-Double-click `Start Outreach.bat`. The browser opens by itself.
+Double-click the **Outreach Studio** icon on the Desktop or Start Menu, or
+`Start Outreach.bat` in this folder. The browser opens by itself.
 Keep the black window open while you work. Close it when you are done.
+
+## Smart import
+
+The Import page reads any CSV: Apify, Apollo, Instantly, or a hand-built
+list. Column names are recognized by keyword, so `location_business`,
+`business_location`, and `Company City` all land on Location, and the same
+logic covers every field. You review the proposed mapping once, adjust
+anything, and import. Manual column matching is never required.
 
 ## The pages (sidebar, top to bottom)
 

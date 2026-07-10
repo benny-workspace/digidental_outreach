@@ -346,6 +346,22 @@ def create_import_batch(source_file, mapping, summary):
     return batch_id
 
 
+def update_import_batch(batch_id, summary):
+    """Write the final counts after the rows are actually inserted."""
+    conn = get_conn()
+    conn.execute(
+        "UPDATE import_batches SET rows_imported = ?, rows_disqualified = ?, "
+        "rows_duplicate = ?, warnings = ? WHERE id = ?",
+        (
+            summary.get("imported", 0), summary.get("disqualified", 0),
+            summary.get("duplicates", 0), json.dumps(summary.get("errors", [])),
+            batch_id,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
 def get_import_batches():
     conn = get_conn()
     rows = conn.execute(
