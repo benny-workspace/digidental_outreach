@@ -1,7 +1,7 @@
 # Outreach Studio
 
 A local lead outreach system. Everything runs on this laptop. No paid APIs,
-no recurring cost. DigiDental is the active workspace; the software itself
+no recurring cost. Outreach Studio is the active workspace; the software itself
 is business-agnostic (see the tenant section below).
 
 ## Opening the app
@@ -53,7 +53,7 @@ the sidebar shows how many outcomes are unsynced. The three scripts that need
 the internet (enrichment, learning batch, planner sync) run from a terminal on
 purpose, never from a button.
 
-## Selling this to another business later
+## Internal Local Personalization for Businesses
 
 The app is tenant-aware. Business specifics live in `tenants/<tenant>/` and
 the Admin page, not in code. To run it for a different business: set `tenant`
