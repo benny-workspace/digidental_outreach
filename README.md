@@ -1,7 +1,9 @@
 <div align="center">
+
 # Outreach Studio
 
-A local lead outreach system. Everything runs on this laptop. No paid APIs,
+A local lead outreach system. (A Lead Enrichment software 100% Free completely locally run, to automate generative custom outreach for businesses/clients through Email, Instagram, LinkedIn, Facebook, & even a script for a Loom outreach)
+Everything runs on this laptop. No paid APIs,
 no recurring cost. Outreach Studio is the active workspace; the software itself
 is business-agnostic (see the tenant section below).
 
