@@ -20,8 +20,8 @@ sample_data/*
 # If you make the repo private, remove this line and commit the folder.
 skill/
 
-# Streamlit local config
-.streamlit/
+# Streamlit secrets stay local; config.toml is committed.
+.streamlit/secrets.toml
 
 # Local secrets (Supabase keys for the planner sync). Never commit.
 config.local.yaml

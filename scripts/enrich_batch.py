@@ -37,10 +37,13 @@ def load_config():
 
 
 def build_system_prompt(config):
+    import company
+    profile = company.load_profile()
     template = (BASE_DIR / "prompts" / "llm_system_prompt.txt").read_text(encoding="utf-8")
-    return template.format_map(
-        defaultdict(str, {"founder_name": str(config.get("founder_name", ""))})
-    )
+    return template.format_map(defaultdict(str, {
+        "founder_name": str(profile.get("founder_name") or config.get("founder_name", "")),
+        "company_name": str(profile.get("company_name", "")),
+    }))
 
 
 def ollama_is_running(config):

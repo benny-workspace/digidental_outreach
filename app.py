@@ -5,7 +5,6 @@ the learning batch, and the planner sync are separate command line scripts.
 
 Pages are tenant-aware. Business specifics come from the active workspace
 profile (company.py), not from this code, so the same app serves any tenant.
-The default workspace is DigiDental.
 """
 
 import json
@@ -36,10 +35,21 @@ st.set_page_config(
 )
 
 # Minimal look: hide Streamlit chrome, tighten spacing, soften panels.
+# Hide only the Deploy button, main menu, and footer. Never hide the whole
+# header or toolbar: the sidebar open/close arrow lives there, and hiding
+# it strands the user on one page when the sidebar is collapsed.
 st.markdown(
     """
     <style>
-    #MainMenu, footer, [data-testid="stToolbar"] {visibility: hidden;}
+    #MainMenu, footer,
+    [data-testid="stAppDeployButton"],
+    [data-testid="stMainMenu"] {display: none;}
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stExpandSidebarButton"] {
+        visibility: visible !important;
+        display: flex !important;
+    }
     .block-container {padding-top: 2rem; padding-bottom: 3rem; max-width: 1150px;}
     h1 {font-weight: 650; letter-spacing: -0.02em;}
     h2, h3 {font-weight: 600;}
@@ -49,8 +59,6 @@ st.markdown(
         padding: 12px 16px;
     }
     [data-testid="stSidebar"] {min-width: 250px;}
-    [data-testid="stSidebar"] [data-testid="StyledFullScreenButton"],
-    [data-testid="stSidebar"] button[title="View fullscreen"] {display: none;}
     </style>
     """,
     unsafe_allow_html=True,
@@ -855,9 +863,17 @@ def admin_page():
 _profile = company.load_profile()
 _logo = BASE_DIR / "assets" / "logo_transparent.png"
 if _logo.exists():
-    lc1, lc2 = st.sidebar.columns([1, 3])
-    lc1.image(str(_logo), use_container_width=True)
-    lc2.markdown("### Outreach Studio")
+    # Plain HTML img, not st.image: no fullscreen button, not clickable.
+    import base64
+    _logo_b64 = base64.b64encode(_logo.read_bytes()).decode()
+    st.sidebar.markdown(
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">'
+        f'<img src="data:image/png;base64,{_logo_b64}" width="40" height="40" '
+        'style="pointer-events:none;user-select:none;" alt="">'
+        '<span style="font-size:1.3rem;font-weight:650;">Outreach Studio</span>'
+        "</div>",
+        unsafe_allow_html=True,
+    )
 else:
     st.sidebar.title("Outreach Studio")
 _tenant_name = _profile.get("company_name") or db.active_tenant()

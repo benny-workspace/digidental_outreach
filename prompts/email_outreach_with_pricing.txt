@@ -13,4 +13,4 @@ If Denty books zero after hours appointments in the first 30 days, the setup fee
 Worth a 90 second Loom showing exactly how it would work for {clinic_name}?
 
 {founder_name}
-Founder, DigiDental
+Founder, {company_name}

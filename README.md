@@ -10,6 +10,25 @@ Double-click the **Outreach Studio** icon on the Desktop or Start Menu, or
 `Start Outreach.bat` in this folder. The browser opens by itself.
 Keep the black window open while you work. Close it when you are done.
 
+The app runs at http://localhost:8501 on this machine only. That is by
+design: your lead data never leaves the laptop.
+
+## Setup on a new machine (one time)
+
+1. Install Python 3.12 or newer from python.org (tick "Add python.exe to PATH").
+2. Download this repository (Code -> Download ZIP, or `git clone`) and unzip it.
+3. In the folder, open PowerShell and run:
+
+       python -m venv venv
+       venv\Scripts\python.exe -m pip install -r requirements.txt
+
+4. Start it: double-click `Start Outreach.bat`.
+5. Optional: `powershell -ExecutionPolicy Bypass -File scripts\install_shortcuts.ps1`
+   creates the Desktop and Start Menu icons.
+
+The first start creates an empty database. Set up your business on the
+Admin page, then import leads.
+
 ## Smart import
 
 The Import page reads any CSV: Apify, Apollo, Instantly, or a hand-built

@@ -13,7 +13,7 @@ That covers call routing, calendar connection, and testing for your workflow. If
 Smaller practices feel a missed call more, not less. One recovered patient covers the setup cost.
 
 "Why do I need my own Vapi account?"
-It keeps usage billing transparent and in your name. Denty is designed for your workflow. Setup and management stay with DigiDental.
+It keeps usage billing transparent and in your name. Denty is designed for your workflow. Setup and management stay with Outreach Studio.
 
 "Why pay you monthly if I already pay Vapi?"
 Vapi is the usage bill. The monthly fee covers monitoring, small updates, and fixes if something breaks.

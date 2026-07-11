@@ -1,4 +1,4 @@
-[0:00-0:10] Hi, I am {founder_name} from DigiDental. This is for {clinic_name}.
+[0:00-0:10] Hi, I am {founder_name} from {company_name}. This is for {clinic_name}.
 
 [0:10-0:30] Here is what I noticed: {pain_point}. The front desk cannot answer every call. A call that goes to voicemail often becomes a call to the next clinic on Google.
 

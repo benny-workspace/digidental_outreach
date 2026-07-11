@@ -1,0 +1,11 @@
+# Outreach Studio Streamlit settings. Committed so a fresh clone behaves
+# the same on any machine.
+
+[browser]
+gatherUsageStats = false
+
+[server]
+port = 8501
+
+[theme]
+base = "light"
