@@ -1,8 +1,33 @@
+<div align="center">
 # Outreach Studio
 
 A local lead outreach system. Everything runs on this laptop. No paid APIs,
 no recurring cost. Outreach Studio is the active workspace; the software itself
 is business-agnostic (see the tenant section below).
+
+<a href="https://x.com/bennyuncrowned"><img src="https://img.shields.io/badge/Follow-%40bennyuncrowned-000000?style=flat&logo=x&logoColor=white" alt="Follow on X" /></a>
+<a href="https://discord.gg/jm5cxrT694"><img src="https://img.shields.io/badge/Join-Discord-5865F2?style=flat&logo=discord&logoColor=white" alt="Join Discord" /></a>
+<a href="https://www.linkedin.com/in/ceobenny/"><img src="https://img.shields.io/badge/ceobenny-LinkedIn-blue" /></a>
+
+<p>
+  <strong>English</strong> ·
+  <a href="docs/readme/README.es.md">Español</a> ·
+  <a href="docs/readme/README.zh-CN.md">简体中文</a> ·
+  <a href="docs/readme/README.zh-TW.md">繁體中文</a> ·
+  <a href="docs/readme/README.ja.md">日本語</a> ·
+  <a href="docs/readme/README.ko.md">한국어</a> ·
+  <a href="docs/readme/README.vi.md">Tiếng Việt</a> ·
+  <a href="docs/readme/README.hi.md">हिन्दी</a> ·
+  <a href="docs/readme/README.bn.md">বাংলা</a> ·
+  <a href="docs/readme/README.ar.md">العربية</a> ·
+  <a href="docs/readme/README.it.md">Italiano</a> ·
+  <a href="docs/readme/README.pt-BR.md">Português (Brasil)</a> ·
+  <a href="docs/readme/README.fr.md">Français</a> ·
+  <a href="docs/readme/README.ru.md">Русский</a> ·
+  <a href="docs/readme/README.tr.md">Türkçe</a>
+</p>
+
+<img width="1919" height="909" alt="outreach-studio" src="https://github.com/user-attachments/assets/52b60667-2f88-4ada-840e-92b6bb040d9d" />
 
 ## Opening the app
 
