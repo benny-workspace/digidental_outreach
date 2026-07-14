@@ -199,6 +199,83 @@ def init_db():
     conn.close()
 
 
+# -------------------------------------------------------------------- Backups
+
+BACKUP_DIR = DATA_DIR / "backups"
+BACKUP_KEEP = 30
+
+
+def backup_db(tag="manual"):
+    """Snapshot the whole database into data/backups. Returns the new path.
+
+    Uses SQLite's online backup API, so the copy is consistent even if
+    the app writes at the same moment. The filename starts with a
+    timestamp, so name order is age order.
+    """
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    target = BACKUP_DIR / f"outreach_{stamp}_{tag}.db"
+    src = sqlite3.connect(DB_PATH)
+    dst = sqlite3.connect(target)
+    with dst:
+        src.backup(dst)
+    dst.close()
+    src.close()
+    _prune_backups()
+    return target
+
+
+def auto_backup():
+    """Daily safety net, called on every app rerun. Costs one directory
+    check when today's backup already exists."""
+    if not DB_PATH.exists():
+        return None
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    today = datetime.now().strftime("%Y-%m-%d")
+    if any(BACKUP_DIR.glob(f"outreach_{today}_*.db")):
+        return None
+    return backup_db(tag="auto")
+
+
+def list_backups():
+    """Backups newest first, as dicts with path, name, size, modified."""
+    if not BACKUP_DIR.exists():
+        return []
+    out = []
+    for f in sorted(BACKUP_DIR.glob("outreach_*.db"), reverse=True):
+        stat = f.stat()
+        out.append({
+            "path": f, "name": f.name, "size": stat.st_size,
+            "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(timespec="seconds"),
+        })
+    return out
+
+
+def _prune_backups():
+    files = sorted(BACKUP_DIR.glob("outreach_*.db"))
+    for old in files[:-BACKUP_KEEP]:
+        old.unlink()
+
+
+def restore_backup(backup_path):
+    """Replace the live database with a backup, in place.
+
+    The current database is backed up first (tag pre_restore), so a
+    restore is always reversible. Writing through the backup API instead
+    of copying the file avoids Windows file locks from open connections.
+    """
+    backup_path = Path(backup_path)
+    if not backup_path.exists():
+        raise FileNotFoundError(backup_path)
+    backup_db(tag="pre_restore")
+    src = sqlite3.connect(backup_path)
+    dst = sqlite3.connect(DB_PATH)
+    with dst:
+        src.backup(dst)
+    dst.close()
+    src.close()
+
+
 LEAD_INSERT_COLUMNS = (
     "tenant_id", "clinic_name", "owner_first_name", "first_name", "last_name",
     "role_title", "industry", "niche", "website", "location", "phone", "email",

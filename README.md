@@ -92,6 +92,28 @@ anything, and import. Manual column matching is never required.
 The database is a single file: `data\outreach.db`. Copy it to back up every
 lead, draft, outcome, and import batch.
 
+## Backups (automatic)
+
+The app snapshots the whole database into `data\backups` on the first
+launch of each day and keeps the newest 30. The Admin page has the rest:
+**Back up now**, **Download latest backup** (save that file to a USB stick
+or Google Drive so a copy lives off this laptop), and **Restore** — which
+backs up the current database first, so restoring is always reversible.
+
+If the laptop ever dies, setup on a new machine plus one backup file
+restores everything: install the app (section above), then replace
+`data\outreach.db` with your backup copy before the first start.
+
+## Letting Claude work with the data
+
+Nothing to configure. The database is the one file `data\outreach.db`, so
+any Claude Code session opened in this folder can read it, add leads, or
+fix data directly — just ask (for example: "add these 20 leads to the
+database" with a CSV, or "show me every lead with no email"). A daily
+backup already exists by the time you ask, and Claude can run
+`python -c "import db; db.backup_db()"` first for an extra snapshot
+before bigger changes.
+
 ## Offline-safe
 
 Everything above works with no internet. New feedback is saved locally and

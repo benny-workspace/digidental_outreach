@@ -26,6 +26,7 @@ import generate_drafts
 import import_leads
 
 db.init_db()
+db.auto_backup()
 
 _page_icon = BASE_DIR / "assets" / "logo_transparent.png"
 st.set_page_config(
@@ -243,7 +244,7 @@ def leads_page():
             "Leads matching ALL chosen conditions are deleted. "
             "You see the matches before anything happens."
         )
-        c1, c2, c3 = st.columns(3)
+        c1, c2, c3, c4 = st.columns(4)
         rule_statuses = c1.multiselect("Status is", list(db.LEAD_STATUSES), key="ac_status")
         rule_outcomes = c2.multiselect(
             "Outcome is", ["not set"] + list(db.LEAD_OUTCOMES), key="ac_outcome"
@@ -251,12 +252,14 @@ def leads_page():
         batches = db.get_import_batches()
         batch_labels = {f"#{b['id']} {b['source_file']}": b["id"] for b in batches}
         rule_batches = c3.multiselect("From import batch", list(batch_labels), key="ac_batch")
+        niche_options = sorted({(l.get("niche") or "").strip() or "not set" for l in all_leads})
+        rule_niches = c4.multiselect("Niche / category is", niche_options, key="ac_niche")
         use_score = st.checkbox("Also require score at or below a cap", key="ac_use_score")
         score_cap = None
         if use_score:
             score_cap = st.number_input("Score cap", value=0, key="ac_score")
 
-        any_rule = bool(rule_statuses or rule_outcomes or rule_batches or use_score)
+        any_rule = bool(rule_statuses or rule_outcomes or rule_batches or rule_niches or use_score)
         if not any_rule:
             st.caption("Pick at least one condition to build the rule.")
             return
@@ -271,6 +274,10 @@ def leads_page():
                     continue
             if wanted_batches and l.get("import_batch_id") not in wanted_batches:
                 continue
+            if rule_niches:
+                value = (l.get("niche") or "").strip() or "not set"
+                if value not in rule_niches:
+                    continue
             if use_score and l["intent_score"] > score_cap:
                 continue
             matched.append(l)
@@ -856,6 +863,47 @@ def admin_page():
             st.success("Restored. Reload to see it.")
     else:
         st.caption("No prior versions yet. They appear here after your first save.")
+
+    st.subheader("Database backups")
+    st.caption(
+        "Everything lives in one file: data\\outreach.db. The app snapshots "
+        "it into data\\backups on the first launch of each day, keeping the "
+        f"newest {db.BACKUP_KEEP}. Download a copy now and then to keep one "
+        "off this laptop (USB stick, Google Drive, anywhere)."
+    )
+    if st.button("Back up now"):
+        made = db.backup_db()
+        st.success(f"Backup written: {made.name}")
+    backups = db.list_backups()
+    if not backups:
+        st.caption("No backups yet. One is created on each day's first launch.")
+    else:
+        newest = backups[0]
+        st.download_button(
+            "Download latest backup",
+            data=newest["path"].read_bytes(),
+            file_name=newest["name"],
+            mime="application/octet-stream",
+        )
+        st.dataframe(
+            [{
+                "Backup": b["name"], "Size (KB)": round(b["size"] / 1024, 1),
+                "Created": b["modified"],
+            } for b in backups],
+            hide_index=True, use_container_width=True,
+        )
+        chosen_backup = st.selectbox("Restore from", [b["name"] for b in backups])
+        sure_restore = st.checkbox(
+            "Yes, replace the current database with this backup. "
+            "The current database is backed up first, so this is reversible."
+        )
+        if st.button("Restore this backup", disabled=not sure_restore):
+            db.restore_backup(db.BACKUP_DIR / chosen_backup)
+            st.success(
+                "Restored. The database you just replaced was saved as a "
+                "pre_restore backup in the same folder."
+            )
+            st.rerun()
 
 
 # --------------------------------------------------------------------- Router
