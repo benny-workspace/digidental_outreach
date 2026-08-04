@@ -1,9 +1,9 @@
-Hey {owner_first_name}, one real question.
+Hey {owner_first_name}, one quick question.
 
-How many patient calls does {clinic_name} miss after 5 PM or on weekends?
+How are you handling inquiries that come in when the team is busy or unavailable?
 
 {angle_line}
 
-I built an AI overflow receptionist for dental practices. It answers the calls the front desk cannot reach and books them straight into the calendar. Sounds human.
+{offer_summary}
 
-Happy to send a 90 second Loom showing how it would work for {clinic_name}. Want it?
+Happy to send a 90 second Loom showing how it could fit {business_name}. Want it?

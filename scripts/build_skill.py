@@ -1,4 +1,4 @@
-"""Rebuild the digi-dental-copywriter skill from the current repo content.
+"""Rebuild the outreach-studio-copywriter skill from the current repo content.
 
 The .skill file is a zip archive. This script composes it from:
     skill\\SKILL.md                     (master instructions, hand-edited)
@@ -11,8 +11,8 @@ Run it after any template change so the skill and the app never drift:
     python scripts\\build_skill.py
 
 Outputs:
-    Documents\\SKILLS\\digi-dental-copywriter.skill   (the portable skill file)
-    .claude\\skills\\digi-dental-copywriter\\          (installed for Claude Code)
+    Documents\SKILLS\outreach-studio-copywriter.skill   (the portable skill file)
+    .claude\skills\outreach-studio-copywriter\          (installed for Claude Code)
 """
 
 import sys
@@ -24,7 +24,7 @@ SKILL_DIR = BASE_DIR / "skill"
 PROMPTS_DIR = BASE_DIR / "prompts"
 REFERENCE_DIR = BASE_DIR / "reference"
 
-SKILL_NAME = "digi-dental-copywriter"
+SKILL_NAME = "outreach-studio-copywriter"
 SKILL_FILE = Path.home() / "Documents" / "SKILLS" / f"{SKILL_NAME}.skill"
 CLAUDE_SKILL_DIR = Path.home() / ".claude" / "skills" / SKILL_NAME
 

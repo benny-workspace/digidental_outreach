@@ -23,17 +23,16 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import requests
-import yaml
 from bs4 import BeautifulSoup
 
+import app_config
 import db
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 def load_config():
-    with open(BASE_DIR / "config.yaml", encoding="utf-8") as fh:
-        return yaml.safe_load(fh) or {}
+    return app_config.load_config()
 
 
 def build_system_prompt(config):
@@ -95,7 +94,7 @@ def parse_model_json(raw):
 def call_ollama(config, lead, page_text):
     ollama = config.get("ollama", {})
     prompt = (
-        f"Clinic name: {lead['clinic_name']}\n"
+        f"Business name: {lead['clinic_name']}\n"
         f"Location: {lead['location'] or 'unknown'}\n"
         f"Operator notes: {lead['notes'] or 'none'}\n\n"
         f"Website text:\n{page_text}"

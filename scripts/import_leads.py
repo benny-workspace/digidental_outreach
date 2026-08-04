@@ -45,8 +45,8 @@ def parse_review_count(value):
 def compute_score(lead):
     """Deterministic intent score. Returns (score, disqualified).
 
-    The signals are the active tenant's qualification rules. For DigiDental
-    they mark dental practices likely to buy an overflow receptionist.
+    The signals are generic defaults. Customize qualification logic or profile
+    rules for a specific business before relying on the score.
     """
     score = 0
     if lead["evening_or_saturday_hours"] == "Y":

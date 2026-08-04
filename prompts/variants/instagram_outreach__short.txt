@@ -1,5 +1,5 @@
 Hey {owner_first_name}, quick one.
 
-Who picks up at {clinic_name} after closing?
+{angle_line}
 
-I build AI overflow receptionists for dental clinics. Want a 90 second recording? Reply DENTY.
+I have a simple idea for {business_name}. Want a 90 second recording?

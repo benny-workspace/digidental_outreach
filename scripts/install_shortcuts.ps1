@@ -6,14 +6,7 @@ $project = Split-Path -Parent $PSScriptRoot
 $launcher = Join-Path $project "Start Outreach.bat"
 $icon = Join-Path $project "assets\outreach_studio.ico"
 
-# Remove any old-brand shortcuts so only the new name remains.
-$oldNames = @(
-    (Join-Path ([Environment]::GetFolderPath('Desktop')) "DigiDental Outreach.lnk"),
-    (Join-Path ([Environment]::GetFolderPath('StartMenu')) "Programs\DigiDental Outreach.lnk")
-)
-foreach ($old in $oldNames) {
-    if (Test-Path $old) { Remove-Item $old -Force }
-}
+
 
 $shell = New-Object -ComObject WScript.Shell
 $locations = @(

@@ -1,7 +1,5 @@
 Hey {owner_first_name}, quick one.
 
-Who answers {clinic_name}'s phone after 5 PM?
+{angle_line}
 
-I build AI overflow receptionists for dental practices. They catch the calls the front desk cannot and book them straight into the calendar.
-
-Want a 90 second Loom? No form, no pitch.
+I have a simple idea for {business_name}. Want a 90 second Loom? No form, no pitch.

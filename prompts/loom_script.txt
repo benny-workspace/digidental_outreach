@@ -1,11 +1,11 @@
-[0:00-0:10] Hi, I am {founder_name} from {company_name}. This is for {clinic_name}.
+[0:00-0:10] Hi, I am {founder_name} from {company_name}. This is for {business_name}.
 
-[0:10-0:30] Here is what I noticed: {pain_point}. The front desk cannot answer every call. A call that goes to voicemail often becomes a call to the next clinic on Google.
+[0:10-0:30] Here is what I noticed: {pain_point}.
 
-[0:30-1:00] This is Denty. It answers the missed call, asks if it is a new patient exam or an emergency, and books directly into {calendar_name}.
+[0:30-1:00] The idea is simple: {one_line_value_prop}.
 
-[1:00-1:20] Setup takes one day. Denty runs inside your own Vapi account, so you stay in control. Cost is a one time $2,000 setup and $50 a month after that.
+[1:00-1:20] {offer_summary}
 
-[1:20-1:35] There is a 30 day guarantee. If Denty books zero after hours appointments, the setup fee is refunded.
+[1:20-1:35] {pricing_summary}
 
 [1:35-1:45] If this looks useful, reply to the message. Happy to answer anything first.

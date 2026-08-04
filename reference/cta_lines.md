@@ -1,4 +1,4 @@
-- DM me DENTY if you want the Loom.
 - Want a quick screen recording instead?
-- Happy to do a ten minute call.
-- If you are not the right person, who should this go to?
+- Happy to send a short Loom if useful.
+- Reply and I will send the walkthrough.
+- Worth a 90 second look?

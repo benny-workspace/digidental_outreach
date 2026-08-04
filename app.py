@@ -18,6 +18,7 @@ sys.path.insert(0, str(BASE_DIR / "scripts"))
 
 import streamlit as st
 
+import app_config
 import company
 import csv_mapper
 import db
@@ -755,15 +756,11 @@ def reference_page():
 # ----------------------------------------------------------------- Admin page
 
 def _admin_pin():
-    try:
-        import yaml
-        return str((yaml.safe_load((BASE_DIR / "config.yaml").read_text(encoding="utf-8")) or {}).get("admin_pin", ""))
-    except Exception:
-        return ""
+    return str(app_config.get_config_value("admin_pin", ""))
 
 
 def admin_gate():
-    """Light PIN gate. Set admin_pin in config.yaml to enable it."""
+    """Light PIN gate. Set admin_pin in config.local.yaml to enable it."""
     pin = _admin_pin()
     if not pin:
         return True
@@ -804,7 +801,7 @@ def _parse_pairs(text):
 def admin_page():
     st.title("Admin: company profile")
     if not admin_gate():
-        st.caption("Set admin_pin in config.yaml to protect this page. Empty means open access.")
+        st.caption("Set admin_pin in config.local.yaml to protect this page. Empty means open access.")
         return
     st.caption(
         f"Active tenant: {db.active_tenant()}. Edit here instead of changing code. "

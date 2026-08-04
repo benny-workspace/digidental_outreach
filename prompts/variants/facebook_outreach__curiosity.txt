@@ -1,7 +1,7 @@
-Hey {owner_first_name}, try something once.
+Hey {owner_first_name}, try looking at this once.
 
-Call {clinic_name} tonight after closing. Just listen to what a patient hears.
+Where do good-fit prospects get stuck before they take the next step?
 
 {angle_line}
 
-I built something for exactly that moment. Happy to show you in 90 seconds. Want the Loom?
+I can send a 90 second Loom with the idea for {business_name}.

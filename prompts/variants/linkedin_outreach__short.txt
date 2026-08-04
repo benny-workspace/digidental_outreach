@@ -1,5 +1,7 @@
-Hey {owner_first_name}. One question.
+Hey {owner_first_name}. Quick idea for {business_name}.
 
-How many calls does {clinic_name} miss after 5 PM?
+{angle_line}
 
-I built an AI overflow receptionist for dental practices. It catches those calls and books them. Happy to send a 90 second Loom. Want it?
+{one_line_value_prop}
+
+Happy to send a 90 second Loom. Want it?

@@ -21,8 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import yaml
-
+import app_config
 import company
 import db
 
@@ -33,26 +32,25 @@ VARIANTS_DIR = PROMPTS_DIR / "variants"
 # Deterministic angle rules. Checked in this order.
 DETERMINISTIC_ANGLES = {
     "evening": {
-        "angle_line": "Evening and Saturday hours usually mean after-hours calls that go straight to voicemail.",
-        "pain_point": "your hours run into evenings and Saturdays, so calls come in when nobody can pick up",
-        "one_line_value_prop": "Denty answers the evening and Saturday calls your front desk cannot reach.",
+        "angle_line": "Evening and weekend hours can create demand outside normal response times.",
+        "pain_point": "prospects may reach out when the team is unavailable",
+        "one_line_value_prop": "the offer helps capture and route those inquiries before they go cold",
     },
     "emergency": {
-        "angle_line": "Same-day and emergency requests are exactly the calls that get missed when the front desk is already busy.",
-        "pain_point": "you take same-day and emergency requests, and those calls cannot wait for a callback",
-        "one_line_value_prop": "Denty picks up emergency and same-day calls the moment the front desk cannot.",
+        "angle_line": "Urgent requests are the ones that lose value fastest when nobody responds quickly.",
+        "pain_point": "urgent prospects often need a fast answer before they choose another option",
+        "one_line_value_prop": "the offer helps respond to high-intent inquiries quickly and consistently",
     },
     "default": {
-        "angle_line": "A missed call during a busy front desk moment is often a booking that goes to the next clinic instead.",
-        "pain_point": "busy front desk moments send some calls to voicemail, and voicemail loses bookings",
-        "one_line_value_prop": "Denty catches the calls that would otherwise go to voicemail and books them.",
+        "angle_line": "A missed inquiry during a busy moment can become business for a competitor.",
+        "pain_point": "busy moments can leave good-fit prospects waiting too long",
+        "one_line_value_prop": "the offer helps turn more inbound interest into booked next steps",
     },
 }
 
 
 def load_config():
-    with open(BASE_DIR / "config.yaml", encoding="utf-8") as fh:
-        return yaml.safe_load(fh) or {}
+    return app_config.load_config()
 
 
 def load_template(message_type, variant="direct"):
@@ -80,8 +78,10 @@ def previous_contact_date(lead_id):
 
 def angle_rules():
     """Angle copy for the active tenant. The profile's `angles` key wins;
-    the built-in set is the DigiDental fallback so nothing ever breaks."""
+    the built-in set stays industry-neutral so shared installs start clean."""
     profile_angles = company.load_profile().get("angles") or {}
+    if not isinstance(profile_angles, dict):
+        profile_angles = {}
     rules = {}
     for key, fallback in DETERMINISTIC_ANGLES.items():
         merged = dict(fallback)
@@ -162,9 +162,8 @@ def first_name_only(value):
 def natural_business_name(raw):
     """A copy-friendly business name. The database keeps the full name.
 
-    'Sierra Vista Family Dental Center - Chiricahua Community Health
-    Centers, Inc.' reads as 'Sierra Vista Family Dental Center' in a
-    message, which is how the owner says it out loud.
+    'Example Business - Parent Company, Inc.' reads as 'Example Business'
+    in a message, which is usually how the owner says it out loud.
     """
     name = clean_fragment(raw)
     for separator in (" - ", " | "):
@@ -199,15 +198,21 @@ def build_context(lead, config):
     context = {
         "owner_first_name": owner,
         "clinic_name": natural_business_name(lead["clinic_name"]),
+                "business_name": natural_business_name(lead["clinic_name"]),
         "founder_name": clean_fragment(profile.get("founder_name") or config.get("founder_name", "")),
         "company_name": clean_fragment(profile.get("company_name", "")),
-        "calendar_name": clean_fragment(profile.get("calendar_name") or config.get("calendar_name", "your calendar")),
+        "calendar_name": clean_fragment(profile.get("calendar_name") or config.get("calendar_name", "")),
         "previous_date": previous_contact_date(lead["id"]),
         "angle_line": as_sentence(angles["angle_line"]),
         "pain_point": clean_fragment(angles["pain_point"]).rstrip("."),
         "one_line_value_prop": as_sentence(angles["one_line_value_prop"]),
         "location": clean_fragment(lead.get("location")),
         "niche": clean_fragment(lead.get("niche")),
+        "product_name": clean_fragment(profile.get("product_name", "")),
+        "offer_summary": clean_fragment(profile.get("offer_summary", "")),
+        "pricing_summary": clean_fragment(profile.get("pricing_summary", "")),
+        "target_customer": clean_fragment(profile.get("target_customer", "")),
+        "demo_url": clean_fragment(profile.get("demo_url", "")),
     }
     return defaultdict(str, context)
 

@@ -1,16 +1,15 @@
-# Active business. Its data lives in tenants/<tenant>/ and the Admin page.
-# Change this to run the same app for a different business.
-tenant: "digidental"
+# Shared defaults for Outreach Studio.
+# Keep this file business-neutral before sharing the software.
+# Put private local settings in config.local.yaml instead.
 
-# Optional. Set a PIN to lock the Admin page. Leave empty for open access.
+tenant: "default"
+
+# Optional. Set this in config.local.yaml to lock the Admin page.
 admin_pin: ""
 
-# Fallbacks. The Admin company profile overrides these when set.
-# Edit founder_name in the Admin page, not here, once the app is running.
-founder_name: "Benny"
-
-# Used in the Loom script. Change it if you know the clinic's calendar name.
-calendar_name: "your Google Calendar"
+# Optional fallbacks. Prefer filling these in the Admin page.
+founder_name: ""
+calendar_name: ""
 
 # Phase 2 only. Ignored unless you run scripts/enrich_batch.py yourself.
 ollama:

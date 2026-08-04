@@ -175,21 +175,22 @@ twice a day is fine, it just refreshes today's row.
 
 ## Copywriter skill sync
 
-The digi-dental-copywriter skill (used by Claude for all Digi Dental copy)
-is built from this repo so it always matches the live templates. After you
-edit anything in `prompts\` or `reference\`, run:
+The outreach-studio-copywriter skill is built from this repo so it always
+matches the live templates. After you edit anything in `prompts\` or
+`reference\`, run:
 
     python scripts\build_skill.py
 
-That rewrites `Documents\SKILLS\digi-dental-copywriter.skill` and the
+That rewrites `Documents\SKILLS\outreach-studio-copywriter.skill` and the
 installed copy Claude Code uses. The skill source lives in `skill\` and is
-kept out of git while this repo is public, because it contains sales tactics.
+kept out of git while this repo is public, because it may contain private
+sales tactics.
 
 ## Files
 
 - `app.py` review UI. Never calls a model or the network.
 - `db.py` all database access.
-- `config.yaml` your name, calendar wording, Ollama settings. Edit founder_name first.
+- `config.yaml` shared blank defaults and Ollama settings. Put private tenant settings in gitignored `config.local.yaml`.
 - `scripts/` import, draft generation, export, and the optional Phase 2 batch.
 - `prompts/` message templates. Plain `{single_brace}` placeholders only.
 - `reference/` objection playbook and CTA lines. Read them when a reply comes in.

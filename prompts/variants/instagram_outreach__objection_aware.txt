@@ -1,7 +1,7 @@
-Hey {owner_first_name}.
+Hey {owner_first_name}, not trying to add noise.
 
-This is not about replacing your front desk. They are fine.
+This is about one specific gap: {pain_point}.
 
-It is about the calls that come in when they are gone. {angle_line}
+{one_line_value_prop}
 
-I built an AI overflow receptionist that catches those and books them. Want the 90 second recording? Reply DENTY.
+Want the 90 second recording?

@@ -1,9 +1,9 @@
 Hey {owner_first_name}, quick one.
 
-When is the last time you called {clinic_name} after 5 PM just to see who picks up?
-
-I ask because I build AI overflow receptionists for dental practices. They answer the calls the front desk cannot reach and book straight into the calendar. Sounds completely human.
+I noticed {business_name} and had a practical idea.
 
 {angle_line}
 
-Want a 90 second Loom showing exactly how it would work for {clinic_name}? No form, no pitch.
+{offer_summary}
+
+Want a 90 second Loom showing exactly how it could work? No form, no pitch.

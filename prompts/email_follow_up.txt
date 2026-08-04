@@ -1,47 +1,21 @@
-STEP 1 of 3. Send 3 days after no reply.
-----------------------------------------
-Subject: The Loom answers faster than I can
-
 Hi {owner_first_name},
 
-Following up on the note from {previous_date}. I know the front desk is busy.
+Following up on the note from {previous_date}.
 
-Quick version: Denty covers the calls {clinic_name} misses after hours or during lunch, and books them straight into the calendar. Setup takes one day.
+Quick version: {one_line_value_prop}
 
-{one_line_value_prop}
-
-No long demo needed. A short Loom or a ten minute call both work.
+If this is relevant for {business_name}, I can send a short Loom and you can decide from there.
 
 {founder_name}
 
-STEP 2 of 3. Send 7 days after step 1.
-----------------------------------------
-Subject: What if it does not work?
+---
 
 Hi {owner_first_name},
 
-Fair question to ask about anything new. Here is my actual answer.
-
-Every booking Denty makes lands in your calendar with a booking ID and a timestamp. Screen-share verification whenever you want it. And if Denty books zero after hours appointments in the first 30 days, the setup fee is refunded.
+One last follow-up from me.
 
 {angle_line}
 
-Worth a look?
-
-{founder_name}
-
-STEP 3 of 3. Send 14 days after step 2. Last touch.
-----------------------------------------
-Subject: Last one from me
-
-Hi {owner_first_name},
-
-This is the last time I reach out.
-
-If the timing is off, no hard feelings. You run a clinic, not a tech experiment.
-
-If you ever want to hear what Denty sounds like on a real call, reply anytime. The door stays open.
-
-Good luck keeping that schedule full.
+If now is not the right time, no problem. If you want the short walkthrough later, reply anytime.
 
 {founder_name}

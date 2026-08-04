@@ -1,6 +1,18 @@
-# Copy this file to config.local.yaml and fill in your Supabase details.
-# config.local.yaml is gitignored. Never put real keys in any committed file.
-#
+# Copy this file to config.local.yaml for machine-specific settings.
+# config.local.yaml is gitignored. Never put real keys in committed files.
+
+# Use a private tenant name for your own business workspace.
+# Shared installs use the generic "default" tenant from config.yaml.
+tenant: "my-business"
+
+# Optional. Set a PIN to lock the Admin page locally.
+admin_pin: ""
+
+# Optional local fallbacks. Prefer filling these in the Admin page.
+founder_name: ""
+calendar_name: ""
+
+# Optional planner sync credentials.
 # Find both values in your Supabase dashboard:
 # Project Settings -> API -> Project URL and service_role secret key.
 supabase:

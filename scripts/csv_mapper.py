@@ -75,8 +75,8 @@ FIELD_SYNONYMS = {
 
 # Specific tokens that strongly identify one field. Full weight.
 FIELD_ESSENCE = {
-    "business_name": ["practice", "clinic", "dental", "dentist", "brand", "shop",
-                      "store", "firm", "restaurant", "salon", "gym", "agency", "studio"],
+    "business_name": ["business", "company", "brand", "shop", "store", "firm",
+                      "restaurant", "salon", "gym", "agency", "studio", "practice"],
     "first_name": ["first", "fname", "given", "forename", "firstname"],
     "last_name": ["last", "surname", "family", "lname", "lastname"],
     "contact_name": ["owner", "fullname"],
@@ -116,7 +116,7 @@ GENERIC_TOKENS = {
 }
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-URL_RE = re.compile(r"^(https?://|www\.)\S+|.+\.(com|net|org|io|co|dental|dentist)\b", re.IGNORECASE)
+URL_RE = re.compile(r"^(https?://|www\.)\S+|.+\.(com|net|org|io|co|biz|app)\b", re.IGNORECASE)
 PHONE_RE = re.compile(r"^[\d\s()+.\-]{7,20}$")
 
 LOW_CONFIDENCE = 0.7

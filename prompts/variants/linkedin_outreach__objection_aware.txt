@@ -1,9 +1,9 @@
-Hey {owner_first_name}.
+Hey {owner_first_name}, I will keep this practical.
 
-Most practice owners tell me the same thing: we already have a receptionist.
+Most teams do not need another tool unless it solves a specific bottleneck.
 
-She is exactly why this works. Denty only covers the hours she physically cannot: after 5 PM, lunch, weekends. {angle_line}
+{angle_line}
 
-It books those calls straight into your calendar, and there is a 30 day guarantee on after hours bookings.
+{one_line_value_prop}
 
-Want a 90 second Loom showing it on a real call?
+Worth a 90 second Loom?

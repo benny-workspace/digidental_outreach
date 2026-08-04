@@ -1,0 +1,42 @@
+# Hermes <-> Outreach Studio automation config
+# One file controls the whole loop. Flip `mode` per channel to change behavior.
+# Keep this file business-neutral before sharing.
+#
+# channel modes:
+#   stage     -> generate + copy draft into Obsidian "Outreach/Queue" for YOU to send (safe, ToS-compliant)
+#   auto      -> Hermes sends it directly (only valid for email; needs email creds below)
+#   browser   -> Hermes drives your logged-in browser to send (LinkedIn/Instagram; violates platform ToS, account-ban risk)
+
+tenant: "default"
+
+studio:
+  port: 8501
+  headless_launcher: "Start Headless.bat"
+
+obsidian:
+  vault: ""
+  queue_note: "Outreach/Queue.md"
+  center_note: "Outreach/Command Center.md"
+
+channels:
+  email:
+    mode: stage
+    send_time: "09:00"
+  linkedin:
+    mode: stage
+    send_time: "10:00"
+  instagram:
+    mode: stage
+    send_time: "11:00"
+  facebook:
+    mode: stage
+    send_time: "18:45"
+
+email:
+  provider: ""
+  from_name: ""
+  gmail_token_path: ""
+  smtp_host: ""
+  smtp_port: 587
+  smtp_user: ""
+  smtp_pass: ""

@@ -4,7 +4,8 @@ Every script and the app go through these functions. This file makes no
 network calls. All functions are defined here before any other file
 imports them. Data is tenant-aware: every row carries a tenant_id so the
 same product can later serve other businesses. The active tenant comes
-from config.yaml (key: tenant), default digidental.
+from config.yaml plus optional config.local.yaml (key: tenant), default
+`default`.
 """
 
 import json
@@ -57,22 +58,21 @@ CONVERSION_STAGES = (
     "closed_won", "closed_lost",
 )
 
-_ACTIVE_TENANT = None
+_active_tenant = None
 
 
 def active_tenant():
-    """Tenant this app instance works with. From config.yaml, cached."""
-    global _ACTIVE_TENANT
-    if _ACTIVE_TENANT is None:
-        tenant = "digidental"
+    """Tenant this app instance works with. Cached after config load."""
+    global _active_tenant
+    if _active_tenant is None:
+        tenant = "default"
         try:
-            import yaml
-            with open(BASE_DIR / "config.yaml", encoding="utf-8") as fh:
-                tenant = str((yaml.safe_load(fh) or {}).get("tenant", "digidental"))
+            import app_config
+            tenant = str(app_config.get_config_value("tenant", "default"))
         except Exception:
             pass
-        _ACTIVE_TENANT = tenant or "digidental"
-    return _ACTIVE_TENANT
+        _active_tenant = tenant or "default"
+    return _active_tenant
 
 
 def now_iso():
@@ -136,7 +136,7 @@ def init_db():
 
         CREATE TABLE IF NOT EXISTS import_batches (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tenant_id TEXT DEFAULT 'digidental',
+            tenant_id TEXT DEFAULT 'default',
             source_file TEXT DEFAULT '',
             mapping TEXT DEFAULT '{}',
             rows_imported INTEGER DEFAULT 0,
@@ -148,7 +148,7 @@ def init_db():
 
         CREATE TABLE IF NOT EXISTS outreach_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tenant_id TEXT DEFAULT 'digidental',
+            tenant_id TEXT DEFAULT 'default',
             lead_id INTEGER NOT NULL REFERENCES leads(id),
             channel TEXT DEFAULT '',
             message_type TEXT DEFAULT '',
@@ -168,7 +168,7 @@ def init_db():
     _ensure_columns(conn, "leads", {
         "outcome": "TEXT DEFAULT ''",
         "outcome_channel": "TEXT DEFAULT ''",
-        "tenant_id": "TEXT DEFAULT 'digidental'",
+        "tenant_id": "TEXT DEFAULT 'default'",
         "first_name": "TEXT DEFAULT ''",
         "last_name": "TEXT DEFAULT ''",
         "role_title": "TEXT DEFAULT ''",
@@ -183,7 +183,7 @@ def init_db():
         "outcome_notes": "TEXT DEFAULT ''",
     })
     _ensure_columns(conn, "messages", {
-        "tenant_id": "TEXT DEFAULT 'digidental'",
+        "tenant_id": "TEXT DEFAULT 'default'",
         "variant": "TEXT DEFAULT 'direct'",
     })
     # Messages created before the channel system map onto the email channel.
